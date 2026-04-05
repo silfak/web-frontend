@@ -28,9 +28,21 @@ export default defineConfig([
         sourceType: "module",
       },
     },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     rules: {
       "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
       "react/react-in-jsx-scope": "off",
+    },
+  },
+  {
+    files: ["src/components/ui/**/*.{js,jsx}"],
+    rules: {
+      "react/prop-types": "off",
+      "react-refresh/only-export-components": "off",
     },
   },
 ]);

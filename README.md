@@ -58,6 +58,6 @@ src/
 ## 🌿 Git Branching Strategy
 
 - `main`: Production-ready (**no direct push**).
-- `develop`: Base branch untuk integrasi.
+- `development`: Base branch untuk integrasi.
 - `feature/<nama-task>`: Fitur baru (contoh: `feature/report-form`).
 - `fix/<nama-bug>`: Perbaikan bug (contoh: `fix/login-ui`).
