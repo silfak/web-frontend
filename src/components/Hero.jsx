@@ -3,16 +3,18 @@ import bg from "./gambar/landingpage.png"
 export default function Hero() {
   return (
     <section
-      className="relative h-[80vh] bg-cover bg-center flex items-center"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
+  className="relative min-h-[90vh] flex items-center bg-cover bg-top md:bg-center"
+  style={{
+    backgroundImage: `url(${bg})`,
+  }}
+>
 
-      <div className="absolute inset-0 bg-white/70"></div>
+     <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
 
       <div className="relative max-w-5xl px-6">
 
-        <h1 className="text-4xl md:text-5xl font-bold">
-          Wujudkan <span className="text-sky-500">Fakultas Lestari</span>
+        <h1 className="text-3xl md:text-5xl font-bold leading-tight text-gray-800">
+  Wujudkan <span className="text-[#166534]">Fakultas Lestari</span>
           <br />
           Melalui Genggaman Tangan.
         </h1>
@@ -22,9 +24,9 @@ export default function Hero() {
           bersama. Laporkan kerusakan secara transparan dan pantau pemborosan energi.
         </p>
 
-        <button className="mt-6 bg-sky-500 text-white px-6 py-3 rounded-lg hover:bg-sky-600">
-          Mulai Melapor
-        </button>
+       <button className="mt-6 bg-[#166534] text-white px-6 py-3 rounded-lg hover:bg-[#15803D] transition">
+  Mulai Melapor
+</button>
 
       </div>
     </section>
