@@ -1,4 +1,4 @@
-import logo from "./gambar/logosilfak.png"
+import logo from "@/assets/LandingPage/logosilfak.png"
 import { Button } from "@/components/ui/button"
 
 export default function Navbar() {

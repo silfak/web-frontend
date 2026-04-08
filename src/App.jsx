@@ -1,14 +1,14 @@
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
-import Footer from "./components/Footer"
+import LandingPage from "./pages/LandingPage"
+import AuthPage from "./pages/AuthPage"
+import RegistPage from "./pages/RegistPage"
 
 function App() {
   return (
     <>
-      <Navbar />
-      <Hero />
-      <Footer />
-    </>
+      <LandingPage />
+      <AuthPage />
+      <RegistPage />
+    </> 
   )
 }
 

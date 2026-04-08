@@ -1,4 +1,4 @@
-import bg from "./gambar/landingpage.png"
+import bg from "@/assets/LandingPage/landingpage.png"
 
 export default function Hero() {
   return (

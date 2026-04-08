@@ -1,4 +1,5 @@
 import { FaInstagram, FaLinkedin } from "react-icons/fa"
+
 export default function Footer() {
   return (
     <footer className="bg-[#f5f5f5] py-16">
