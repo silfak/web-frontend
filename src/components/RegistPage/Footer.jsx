@@ -1,4 +1,6 @@
 import { FaInstagram, FaLinkedin } from "react-icons/fa"
+import { MapPin } from "lucide-react";
+import { Mail } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -18,7 +20,7 @@ export default function Footer() {
         {/* Navigasi */}
         <div>
           <h3 className="font-bold text-[#166534]">Navigasi</h3>
-          <ul className="text-sm text-gray-600 space-y-1">
+          <ul className="text-sm text-gray-600 space-y-1 mt-2">
             <li>Tentang Fakultas Ilmu Komputer</li>
             <li>Panduan Pelaporan</li>
             <li>Pusat Bantuan</li>
@@ -28,12 +30,16 @@ export default function Footer() {
         {/* Hubungi Kami */}
         <div>
           <h3 className="font-bold text-[#166534]">Hubungi Kami</h3>
-          <p className="text-sm text-gray-600">
+          <MapPin color="gray" size={18} className="mt-2" />
+          <p className="text-sm text-gray-600 mt-2">
             Jl. Rs. Fatmawati, Pondok Labu
           </p>
+
           <p className="text-sm text-gray-600">
             Jakarta Selatan, DKI Jakarta 12450
           </p>
+
+          <Mail color="gray" size={18} className="mt-2" />
           <p className="text-sm text-gray-600 mt-2">
             upnvj@upnvj.ac.id
           </p>
@@ -49,7 +55,7 @@ export default function Footer() {
       href="https://instagram.com"
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-gray-600 hover:text-pink-500 transition"
+      className="flex items-center gap-2 text-gray-600 hover:text-pink-500 transition mt-2"
     >
       <FaInstagram size={18} />
       <span className="text-sm">Instagram</span>
@@ -59,7 +65,7 @@ export default function Footer() {
       href="https://linkedin.com"
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition"
+      className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition mt-2"
     >
       <FaLinkedin size={18} />
       <span className="text-sm">LinkedIn</span>

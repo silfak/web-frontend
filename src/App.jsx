@@ -1,6 +1,6 @@
-import LandingPage from "./pages/LandingPage"
-import AuthPage from "./pages/AuthPage"
-import RegistPage from "./pages/RegistPage"
+import LandingPage from "@/components/LandingPage"
+import AuthPage from "@/components/AuthPage"
+import RegistPage from "@/components/RegistPage"
 
 function App() {
   return (

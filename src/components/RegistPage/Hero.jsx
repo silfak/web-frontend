@@ -1,4 +1,10 @@
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button"
+import logo from "@/assets/LandingPage/logosilfak.png"
+import { Eye } from "lucide-react";
+import { EyeOff } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Lock } from "lucide-react";
 
 const Hero = () => {
   const [showPass, setShowPass] = useState(false);
@@ -16,9 +22,7 @@ const Hero = () => {
         
         {/* Header Card */}
         <div className="mb-6 flex flex-col items-center">
-          <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3 border border-gray-100 text-2xl">
-            🌱
-          </div>
+          <img src={logo} className="h-30"/>
           <h1 className="text-2xl font-bold text-[#107C41]">SILFAK</h1>
           <p className="text-gray-600 text-sm mt-1 font-semibold leading-tight">
             Membangun Kampus Lestari <br /> Bersama.
@@ -30,9 +34,11 @@ const Hero = () => {
           
           {/* Input Email */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Email:</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Email</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">✉️</span>
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
+                <Mail color="#107C41" size={20} />
+              </span>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -43,9 +49,11 @@ const Hero = () => {
 
           {/* Input Password */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Password:</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">🔒</span>
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
+                <Lock color="#107C41" size={20} />
+              </span>
               <input
                 type={showPass ? "text" : "password"}
                 placeholder="Enter your password"
@@ -56,16 +64,18 @@ const Hero = () => {
                 onClick={() => setShowPass(!showPass)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] font-bold text-gray-400 hover:text-[#107C41]"
               >
-                {showPass ? "HIDE" : "SHOW"}
+                {showPass ? <Eye color="#107C41" size={20} /> : <EyeOff color="#107C41" size={20} />}
               </button>
             </div>
           </div>
 
           {/* Input Confirm Password */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Confirm Password:</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Confirm Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">🔒</span>
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
+                <Lock color="#107C41" size={20} />
+              </span>
               <input
                 type={showConfirmPass ? "text" : "password"}
                 placeholder="Confirm your password"
@@ -76,15 +86,15 @@ const Hero = () => {
                 onClick={() => setShowConfirmPass(!showConfirmPass)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] font-bold text-gray-400 hover:text-[#107C41]"
               >
-                {showConfirmPass ? "HIDE" : "SHOW"}
+                {showConfirmPass ? <Eye color="#107C41" size={20} /> : <EyeOff color="#107C41" size={20} />}
               </button>
             </div>
           </div>
 
           {/* Tombol Register - Warna disesuaikan dengan gambar (hijau agak pudar/sage) */}
-          <button className="w-full bg-[#8DB3A1] hover:bg-[#7a9c8b] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-gray-200 transition-all active:scale-[0.98] mt-4 uppercase text-xs tracking-widest">
+          <Button className="w-full bg-[#107C41] hover:bg-[#0d6334] text-white font-bold py-5.5 rounded-xl flex shadow-lg shadow-gray-200 transition-all active:scale-[0.98] mt-4 text-1xl tracking-widest">
              Register
-          </button>
+          </Button>
         </form>
 
         {/* Footer Card */}

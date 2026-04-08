@@ -1,4 +1,6 @@
 import bg from "@/assets/LandingPage/landingpage.png"
+import { Button } from "@/components/ui/button"
+import { ClipboardPlus } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -24,9 +26,11 @@ export default function Hero() {
           bersama. Laporkan kerusakan secara transparan dan pantau pemborosan energi.
         </p>
 
-       <button className="mt-6 bg-[#166534] text-white px-6 py-3 rounded-lg hover:bg-[#15803D] transition">
-  Mulai Melapor
-</button>
+        <div className="flex">
+          <Button variant="outline" className="mt-6 bg-[#166534] text-white px-3 py-5 rounded-lg hover:bg-[#15803D] transition">
+            <ClipboardPlus color="white" size={20} /> Mulai Melapor
+          </Button>
+        </div>
 
       </div>
     </section>

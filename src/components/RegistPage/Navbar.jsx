@@ -5,8 +5,8 @@ export default function Navbar() {
     <nav className="flex justify-between items-center px-6 py-4 bg-white">
 
       <div className="flex items-center gap-2">
-        <img src={logo} className="h-10"/>
-        <span className="font-bold text-[#166534]">SILFAK</span>
+        <img src={logo} className="h-20 mt-1.5"/>
+        <span className="text-3xl font-bold text-[#166534]">SILFAK</span>
       </div>
 
     </nav>
