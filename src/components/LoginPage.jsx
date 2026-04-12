@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Navbar from "./AuthPage/Navbar";
-import Hero from "./AuthPage/Hero";
-import Footer from "./AuthPage/Footer";
+import Navbar from "./LoginPage/Navbar";
+import Hero from "./LoginPage/Hero";
+import Footer from "./LoginPage/Footer";
 
-const AuthPage = () => {
+const LoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -13,4 +13,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default LoginPage;

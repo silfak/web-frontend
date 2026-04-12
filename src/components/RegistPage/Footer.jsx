@@ -2,7 +2,7 @@ import { FaInstagram, FaLinkedin } from "react-icons/fa"
 import { MapPin } from "lucide-react";
 import { Mail } from "lucide-react";
 
-export default function Footer() {
+const Footer = () => {
   return (
     <footer className="bg-[#f5f5f5] py-16">
 
@@ -89,3 +89,5 @@ export default function Footer() {
     </footer>
   )
 }
+
+export default Footer;
