@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
 
-import { Button } from "@/components/ui/button"
-import logo from "@/assets/LandingPage/logosilfak.png"
+import { Button } from "@/components/ui/button";
+import logo from "@/assets/LandingPage/logosilfak.png";
 import { Eye } from "lucide-react";
 import { EyeOff } from "lucide-react";
 import { Mail } from "lucide-react";
 import { Lock } from "lucide-react";
-import { User } from 'lucide-react';
+import { User } from "lucide-react";
 
 const Hero = () => {
   const [showPass, setShowPass] = useState(false);
@@ -22,10 +22,9 @@ const Hero = () => {
 
       {/* Register Card */}
       <div className="relative z-10 w-full max-w-140 bg-white rounded-3xl shadow-2xl p-8 md:p-10 text-center border border-gray-100">
-        
         {/* Header Card */}
         <div className="mb-6 flex flex-col items-center">
-          <img src={logo} className="h-30"/>
+          <img src={logo} className="h-30" />
           <h1 className="text-2xl font-bold text-[#107C41]">SILFAK</h1>
           <p className="text-gray-600 text-sm mt-1 font-semibold leading-tight">
             Membangun Kampus Lestari Bersama.
@@ -33,8 +32,10 @@ const Hero = () => {
         </div>
 
         {/* Form Register */}
-        <form className="space-y-4 text-left" onSubmit={(e) => e.preventDefault()}>
-          
+        <form
+          className="space-y-4 text-left"
+          onSubmit={(e) => e.preventDefault()}
+        >
           {/* Input Nama Lengkap */}
           <div>
             <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
@@ -54,7 +55,9 @@ const Hero = () => {
 
           {/* Input Email */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Email</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
+              Email
+            </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
                 <Mail color="#107C41" size={20} />
@@ -69,7 +72,9 @@ const Hero = () => {
 
           {/* Input Password */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Password</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
+              Password
+            </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
                 <Lock color="#107C41" size={20} />
@@ -79,19 +84,25 @@ const Hero = () => {
                 placeholder="Masukan password!"
                 className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#107C41]/20 focus:border-[#107C41] transition-all"
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] font-bold text-gray-400 hover:text-[#107C41]"
               >
-                {showPass ? <Eye color="#107C41" size={20} /> : <EyeOff color="#107C41" size={20} />}
+                {showPass ? (
+                  <Eye color="#107C41" size={20} />
+                ) : (
+                  <EyeOff color="#107C41" size={20} />
+                )}
               </button>
             </div>
           </div>
 
           {/* Input Confirm Password */}
           <div>
-            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Confirm Password</label>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">
+              Confirm Password
+            </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs opacity-50">
                 <Lock color="#107C41" size={20} />
@@ -101,12 +112,16 @@ const Hero = () => {
                 placeholder="Cocokkan password!"
                 className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#107C41]/20 focus:border-[#107C41] transition-all"
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowConfirmPass(!showConfirmPass)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-[10px] font-bold text-gray-400 hover:text-[#107C41]"
               >
-                {showConfirmPass ? <Eye color="#107C41" size={20} /> : <EyeOff color="#107C41" size={20} />}
+                {showConfirmPass ? (
+                  <Eye color="#107C41" size={20} />
+                ) : (
+                  <EyeOff color="#107C41" size={20} />
+                )}
               </button>
             </div>
           </div>
@@ -121,10 +136,14 @@ const Hero = () => {
 
         {/* Footer Card */}
         <p className="mt-6 text-sm text-gray-500 font-medium">
-          Sudah mempunyai akun? <Link to="/login" className="no-underline!">
-          <Button variant="ghost" className="p-0 h-auto font-bold text-blue-500 hover:bg-transparent hover:text-blue-600">
-            Login
-          </Button>
+          Sudah mempunyai akun?{" "}
+          <Link to="/login" className="no-underline!">
+            <Button
+              variant="ghost"
+              className="p-0 h-auto font-bold text-blue-500 hover:bg-transparent hover:text-blue-600"
+            >
+              Login
+            </Button>
           </Link>
         </p>
       </div>
