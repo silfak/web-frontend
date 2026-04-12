@@ -1,6 +1,11 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// macam - macam halaman
+import LandingPage from "@/pages/LandingPage";
+import LoginPage from "@/pages/LoginPage";
+import RegistPage from "@/pages/RegistPage";
+
 const App = () => {
   return (
     <BrowserRouter>
