@@ -1,79 +1,61 @@
 import React from "react";
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { StatusBadge } from "../StatusBadge";
-import { MapPin } from "lucide-react";
 
-export default function DetailLaporanView({ onBack }) {
+export default function DetailLaporanView({ report, onBack }) {
   return (
-    <div className="animate-in slide-in-from-right-4 duration-500 space-y-6">
-      {/* Tombol Kembali */}
-      <button 
-        onClick={onBack}
-        className="flex items-center gap-2 text-gray-500 font-bold text-sm hover:text-[#107C41] transition-all"
-      >
+    <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-500 font-bold text-sm hover:text-[#107C41]">
         <ArrowLeft size={18} /> Kembali
       </button>
 
-      <h3 className="text-xl font-bold text-gray-800">Detail Laporan</h3>
-
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-10">
-        {/* Baris ID Laporan & Status */}
-        <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-50">
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>
-            <h4 className="text-2xl font-black text-gray-800">SFK-2026-001</h4>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Kolom Kiri: Detail Teks */}
+        <div className="lg:col-span-8 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>
+              <h3 className="text-2xl font-black text-gray-800">SFK-2026-001</h3>
+            </div>
+            <StatusBadge status={report.status} />
           </div>
-          <StatusBadge status="Inprogress" />
-        </div>
 
-        {/* Konten Detail: Grid 2 Kolom */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Sisi Kiri: Informasi Teks */}
-          <div className="space-y-6 text-sm">
+          <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-50">
             <div>
-              <label className="font-bold text-gray-800 block mb-1">Tanggal</label>
-              <p className="text-black">12 Oktober 2026</p>
+              <p className="font-bold text-gray-800 mb-1">Tanggal</p>
+              <p className="text-sm text-gray-500">{report.tgl}</p>
             </div>
             <div>
-              <label className="font-bold text-gray-800 block mb-1">Jenis Masalah</label>
-              <p className="text-black">Toilet Rusak</p>
-            </div>
-            <div>
-              <label className="font-bold text-gray-800 block mb-1">Lokasi</label>
-              <div className="flex gap-2 text-black">
-                <MapPin color="gray" size={18} className=" " />
-                Gedung Ki Hajar Dewantara, Toilet Lantai 3
-              </div>
-            </div>
-            <div>
-              <label className="font-bold text-gray-800 block mb-1">Deskripsi</label>
-              <div className="bg-gray-200 p-4 rounded-xl text-black leading-relaxed">
-                Pemborosan AC terjadi setiap hari kamis di jam akhir sore
-              </div>
+              <p className="font-bold text-gray-800 mb-1">Jenis Masalah</p>
+              <p className="text-sm text-gray-500">{report.masalah}</p>
             </div>
           </div>
 
-          {/* Sisi Kanan: Foto Bukti */}
-          <div>
-            <label className="font-bold text-gray-800 block mb-3 text-sm">Foto Bukti</label>
-            <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
-              <img 
-                src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800" 
-                alt="Bukti Kerusakan" 
-                className="w-full h-64 object-cover"
-              />
+          <div className="py-6">
+            <p className="font-bold text-gray-800 mb-3">Lokasi</p>
+            <div className="flex gap-2 text-sm text-gray-500 items-start">
+              <MapPin size={16} className="text-[#107C41] mt-0.5 shrink-0" />
+              <span>{report.lokasi}, {report.ruang}</span>
+            </div>
+          </div>
+
+          <div className="py-6">
+            <p className="font-bold text-gray-800 mb-2">Deskripsi</p>
+            <div className="bg-gray-50 p-5 rounded-2xl text-xs text-gray-500 leading-relaxed italic border border-gray-100">
+              AC diruangan FIKLAB 201 Sering masih menyala ketika sore hari , dan tiap hari kamis
             </div>
           </div>
         </div>
 
-        {/* Kotak Catatan OB (Warna Kuning) */}
-        <div className="mt-10 bg-orange-50 border border-orange-100 rounded-2xl p-6 flex gap-4">
-          <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 shrink-0">
-            <MessageSquare size={20} />
-          </div>
-          <div>
-            <h5 className="font-bold text-orange-800 text-sm">Catatan OB</h5>
-            <p className="text-orange-700/70 text-xs mt-1">Perbaikan mungkin menunggu 1 sampai 2 hari</p>
+        {/* Kolom Kanan: Foto Bukti */}
+        <div className="lg:col-span-4 bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+          <h4 className="font-bold text-gray-800 mb-4">Foto Bukti</h4>
+          <div className="rounded-2xl overflow-hidden shadow-inner bg-gray-100">
+            <img 
+              src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=2070&auto=format&fit=crop" 
+              alt="Bukti" 
+              className="w-full h-auto object-cover"
+            />
           </div>
         </div>
       </div>

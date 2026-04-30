@@ -2,10 +2,10 @@ import React from "react";
 import logo from "@/assets/LandingPage/logosilfak.png";
 import profile from "@/assets/profile.png";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, FilePlus, UserCircle, LogOut } from "lucide-react";
 
-export default function Sidebar({ activeMenu, setActiveMenu }) {
-  const navigate = useNavigate(); 
+export default function SidebarOB({ activeMenu, setActiveMenu }) {
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     // logika hapus token/session n
@@ -14,34 +14,35 @@ export default function Sidebar({ activeMenu, setActiveMenu }) {
 
   const menuItems = [
     { name: "Beranda", icon: LayoutDashboard },
-    { name: "Laporan", icon: FileText },
+    { name: "Laporan", icon: FilePlus },
     { name: "Profile", icon: UserCircle },
   ];
 
-
   return (
     <div className="w-64 bg-[#107C41] text-white flex flex-col justify-between p-6 h-screen">
-      <div>
+      <div className="space-y-8">
         {/* Logo SILFAK */}
         <div className="flex items-center mb-4">
-            <img src={logo} className="h-17 max-w-full mt-1.5"/>
-          <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
+              <img src={logo} className="h-17 max-w-full mt-1.5"/>
+              <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
         </div>
 
         {/* KARTU PROFIL (Gaya Figma) */}
         <div className="bg-white rounded-2xl p-4 mb-8 flex items-center gap-3 shadow-md">
-          <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-100">
-            <img 
-              src={profile}
-              alt="Profile" 
-              className="w-full h-full object-cover"
-            />
+            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-100">
+              <img 
+                src={profile}
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="overflow-hidden">
+              <h3 className="text-[#107C41] font-bold text-lg truncate">Rafi Fauzi</h3>
+              <span className="inline-block bg-[#F3E8DD] text-[#7C4110] text-[10px] px-2 py-0.5 mt-2 rounded-md font-bold uppercase">
+              OB
+              </span>
+             </div>
           </div>
-          <div className="overflow-hidden">
-            <h3 className="text-[#107C41] font-bold text-lg truncate">Rafi Fauzi</h3>
-            <p className="bg-[#E7F3ED] text-[#107C41] px-5 py-1.5 rounded-full text-[10px] font-bold w-fit mt-2 uppercase tracking-wider">Mahasiswa</p>
-          </div>
-        </div>
 
         {/* NAVIGASI MENU */}
         <nav className="space-y-3">
