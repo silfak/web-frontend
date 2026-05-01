@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/DashboardPage/Sidebar";
 import Header from "@/components/DashboardPage/Header";
 import Footer from "@/components/DashboardPage/Footer";
+import { Send, LogOut } from "lucide-react";
 
 // Views
 import BerandaView from "@/components/DashboardPage/Views/BerandaView";
@@ -9,6 +11,8 @@ import ProfileView from "@/components/DashboardPage/Views/ProfileView";
 import LaporanView from "@/components/DashboardPage/Views/LaporanView";
 import DetailLaporanView from "@/components/DashboardPage/Views/DetailLaporanView";
 import CreateReportModal from "@/components/DashboardPage/CreateReportModal";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import Toast from "@/components/DashboardOBPage/Toast";
 
 export default function Dashboard() {
   const [activeMenu, setActiveMenu] = useState("Beranda");
@@ -17,6 +21,11 @@ export default function Dashboard() {
   // State untuk mengontrol apakah sedang melihat tabel (List) atau Detail Laporan
   const [viewState, setViewState] = useState("List"); 
   const [selectedReport, setSelectedReport] = useState(null);
+
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
+  const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
+
+  const [toast, setToast] = useState({ show: false, message: "" });
 
   // Fungsi untuk pindah menu dari Sidebar
   const changeMenu = (menu) => {
@@ -31,8 +40,8 @@ export default function Dashboard() {
   };
 
   const [reports, setReports] = useState([]);
-
-  // 2. FUNGSI SIMULASI (Untuk dipanggil saat klik "Kirim" di Modal)
+ 
+  // FUNGSI SIMULASI (Untuk dipanggil saat klik "Kirim" di Modal)
   const handleSimulateSubmit = () => {
     const dummyData = [
       { tgl: "17 April 2026", lokasi: "Gedung Dewi Sartika", ruang: "Lantai 3, Ruang FIK-301", masalah: "Pemborosan AC", status: "Reported" },
@@ -41,11 +50,33 @@ export default function Dashboard() {
     ];
     setReports(dummyData); // Isi data laporan
     setIsModalOpen(false); // Tutup modal
+
+     // --- TOAST ---
+    setToast({
+      show: true,
+      message: (
+      <>
+        Laporan berhasil dikirim!
+        Cek detailnya di menu Laporan.
+      </>
+    )
+    });
   };
 
-return (
+  const navigate = useNavigate(); 
+
+  // Update fungsi handleLogout
+  const executeLogout = () => {
+    navigate("/"); // Navigasi sebenarnya
+  };
+
+  return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
-      <Sidebar activeMenu={activeMenu} setActiveMenu={changeMenu} />
+      <Sidebar 
+        activeMenu={activeMenu} 
+        setActiveMenu={changeMenu} 
+        onLogoutClick={() => setIsConfirmLogoutOpen(true)} 
+      />
 
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="p-10 flex-1">
@@ -85,7 +116,11 @@ return (
                   />
             )}
 
-            {activeMenu === "Profile" && <ProfileView />}
+            {activeMenu === "Profile" && (
+              <ProfileView 
+                onShowToast={(msg) => setToast({ show: true, message: msg })} 
+              />
+            )}
           </div>
         </div>
         <Footer />
@@ -94,8 +129,44 @@ return (
       <CreateReportModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSimulateSubmit={handleSimulateSubmit} // Kirim fungsi simulasi ke modal
+        onConfirmClick={() => setIsConfirmSubmitOpen(true)} 
       />
+
+      {/* --- MODAL KONFIRMASI KIRIM LAPORAN --- */}
+      <ConfirmationModal 
+        isOpen={isConfirmSubmitOpen}
+        onClose={() => setIsConfirmSubmitOpen(false)}
+        onConfirm={() => {
+          handleSimulateSubmit();
+          setIsConfirmSubmitOpen(false);
+        }}
+        title="Kirim Laporan Ini?"
+        description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
+        confirmText="Ya, Kirim"
+        cancelText="Batal"
+        icon={Send}
+        variant="green"
+      />
+
+      {/* --- MODAL KONFIRMASI LOGOUT --- */}
+      <ConfirmationModal 
+        isOpen={isConfirmLogoutOpen}
+        onClose={() => setIsConfirmLogoutOpen(false)}
+        onConfirm={executeLogout}
+        title="Keluar dari Sistem?"
+        description="Kamu akan keluar dari sistem. Pastikan semua pekerjaanmu sudah tersimpan."
+        confirmText="Ya, Keluar"
+        cancelText="Batal"
+        icon={LogOut}
+        variant="red"
+      /> 
+
+      <Toast 
+        isOpen={toast.show} 
+        message={toast.message} 
+        onClose={() => setToast({ show: false, message: "" })} 
+      />
+
     </div>
   );
 }

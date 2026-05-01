@@ -1,7 +1,7 @@
 import React from "react";
 import { X, Upload, Send } from "lucide-react";
 
-export default function CreateReportModal({ isOpen, onClose, onSimulateSubmit }) {
+export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
   if (!isOpen) return null; // Modal tidak akan muncul jika isOpen false
 
   return (
@@ -78,7 +78,7 @@ export default function CreateReportModal({ isOpen, onClose, onSimulateSubmit })
           </div>
 
           {/* Action Button */}
-          <button onClick={onSimulateSubmit} className="w-full bg-[#107C41] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#0d6334] transition-all shadow-lg shadow-green-900/10">
+          <button onClick={onConfirmClick} className="w-full bg-[#107C41] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#0d6334] transition-all shadow-lg shadow-green-900/10">
             <Send size={18} /> Kirim Laporan
           </button>
           <p className="text-center text-[10px] text-gray-400">Laporan akan diverifikasi oleh admin fasilitas dalam waktu 1x24 jam.</p>

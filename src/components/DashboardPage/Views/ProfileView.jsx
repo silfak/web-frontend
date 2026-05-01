@@ -1,6 +1,15 @@
 import profile from "@/assets/profile.png";
 
-export default function ProfileView() {
+export default function ProfileView({ onShowToast }) {
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Simulasi berhasil ganti password
+    if (onShowToast) {
+      onShowToast("Password berhasil diganti");
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-4 duration-500">
       {/* Kiri: Info Profil */}
@@ -29,14 +38,21 @@ export default function ProfileView() {
       {/* Kanan: Ganti Password */}
       <div className="lg:col-span-8 bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-10">
         <h3 className="text-xl font-bold text-gray-700 mb-8 pb-4 border-b border-gray-50">Ganti Password</h3>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}> {/* Tambahkan onSubmit */}
           {["Password Lama", "Password Baru", "Konfirmasi Password Baru"].map((label) => (
             <div key={label}>
               <label className="text-xs font-bold text-gray-600 block mb-2">{label}</label>
-              <input type="password" placeholder={`Masukkan ${label}`} className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#107C41]/20 outline-none transition-all" />
+              <input 
+                required
+                type="password" 
+                placeholder={`Masukkan ${label}`} 
+                className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#107C41]/20 outline-none transition-all" 
+              />
             </div>
           ))}
-          <button className="w-full bg-[#107C41] text-white py-4 rounded-xl font-bold hover:bg-[#0d6334] transition-all mt-4">Simpan Perubahan</button>
+          <button type="submit" className="w-full bg-[#107C41] text-white py-4 rounded-xl font-bold hover:bg-[#0d6334] transition-all mt-4 active:scale-[0.98]">
+            Simpan Perubahan
+          </button>
         </form>
       </div>
     </div>

@@ -1,9 +1,32 @@
 import React, { useState } from "react";
-import { ArrowLeft, MapPin, Save} from "lucide-react";
-import { StatusBadge } from "../StatusBadge";
+import { ArrowLeft, MapPin, Save, RefreshCw, MessageSquare} from "lucide-react";
+import { StatusBadge } from "@/components/DashboardOBPage/StatusBadge";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
-export default function DetailLaporanOB({ report, onBack }) {
+export default function DetailLaporanOB({ report, onBack, onUpdateStatus }) {
   const [newStatus, setNewStatus] = useState(report.status);
+  const [noteText, setNoteText] = useState("");
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  // warna Select
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case "Reported": return "bg-blue-50 text-blue-600 border-blue-200";
+      case "Inprogress": return "bg-orange-50 text-orange-600 border-orange-200";
+      case "Resolved": return "bg-green-50 text-green-600 border-green-200";
+      default: return "bg-white text-gray-600 border-gray-200";
+    }
+  };
+
+  //  warna teks status di dalam Modal
+  const getStatusTextColor = (status) => {
+    switch (status) {
+      case "Reported": return "text-blue-600";
+      case "Inprogress": return "text-orange-600";
+      case "Resolved": return "text-green-600";
+      default: return "text-gray-800";
+    }
+  };
 
   return (
     <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
@@ -65,53 +88,86 @@ export default function DetailLaporanOB({ report, onBack }) {
               />
             </div>
           </div>
+
+          {/* --- KOMPONEN BARU: TAMPILAN CATATAN OB --- */}
+          {report.catatan && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-2xl flex gap-4 animate-in fade-in zoom-in duration-300">
+              <div className="text-amber-600 shrink-0 mt-1">
+                <MessageSquare size={20} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-black text-amber-700 uppercase tracking-wider">Catatan OB</p>
+                <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                  {report.catatan}
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* KOLOM KANAN: Fitur Update Status (Sesuai Gambar 1) */}
+        {/* KOLOM KANAN: Update Status */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h3 className="text-xl font-black text-gray-800 mb-6 tracking-tight border-b border-gray-50 pb-4">
-              Update Status
-            </h3>
-
+            <h3 className="text-xl font-black text-gray-800 mb-6 border-b border-gray-50 pb-4 tracking-tight">Update Status</h3>
             <div className="space-y-6">
-              {/* Pilih Status Baru */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">Pilih Status Baru</label>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">Pilih Status Baru</label>
                 <select 
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#107C41]/10 transition-all cursor-pointer"
+                  className={`w-full p-4 border rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-[#107C41]/5 transition-all cursor-pointer ${getStatusStyles(newStatus)}`}
                 >
                   <option value="Reported">Reported</option>
                   <option value="Inprogress">In Progress</option>
                   <option value="Resolved">Resolved</option>
                 </select>
               </div>
-
-              {/* Catatan Opsional */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-600">Catatan (Opsional)</label>
-                <textarea 
-                  placeholder="Tambahkan catatan di sini..."
-                  rows="6"
-                  className="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#107C41]/10 transition-all resize-none"
-                ></textarea>
-              </div>
-
-              {/* Tombol Simpan Status */}
+            {/* PERBAIKAN 1: Hubungkan textarea ke state noteText */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600 uppercase tracking-widest">Catatan (Opsional)</label>
+              <textarea 
+                value={noteText} // Tambahkan ini
+                onChange={(e) => setNoteText(e.target.value)} // Tambahkan ini
+                placeholder="Tambahkan catatan progres..." 
+                rows="6" 
+                className="w-full p-4 bg-gray-50/50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-[#107C41]/10 transition-all resize-none"
+              ></textarea>
+            </div>
               <button 
-                type="button"
-                className="w-full py-4 bg-[#166534] text-white rounded-xl font-bold hover:bg-[#114d28] shadow-lg shadow-green-900/10 transition-all flex items-center justify-center gap-3"
+                onClick={() => setIsConfirmOpen(true)}
+                className="w-full py-4 bg-[#107C41] text-white rounded-xl font-bold hover:bg-[#0d6334] shadow-lg shadow-green-900/10 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
               >
-                <Save size={20} />
-                <span>Simpan Status</span>
+                <Save size={20} /> Simpan Status
               </button>
             </div>
           </div>
         </div>
-
       </div>
+
+      {/* MODAL KONFIRMASI UPDATE STATUS */}
+      <ConfirmationModal 
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          onUpdateStatus(newStatus, noteText); // Kirim status baru ke Dashboard
+          setIsConfirmOpen(false);
+        }}
+        title="Ubah Status Laporan?"
+        description={
+          <p>
+            Status laporan akan diubah menjadi{" "}
+            <span className={`font-bold ${getStatusTextColor(newStatus)}`}>
+              {newStatus === "Inprogress" ? "In Progress" : newStatus}
+            </span>.
+          </p>
+        }
+        confirmText="Ya, Ubah Status"
+        cancelText="Batal"
+        icon={RefreshCw}
+        variant="green"
+        warningText="Perubahan status tidak dapat dikembalikan"
+      />
     </div>
   );
 }

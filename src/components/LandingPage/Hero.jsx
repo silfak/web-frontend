@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ClipboardPlus } from "lucide-react";
-import bg from "@/assets/LandingPage/landingpage.png";
+import UPNVJ from "@/assets/LandingPage/landingpage.png";
 
 const Hero = () => {
 
@@ -14,7 +14,7 @@ const Hero = () => {
     <section
       className="relative min-h-[90vh] flex items-center bg-cover bg-top md:bg-center"
       style={{
-        backgroundImage: `url(${bg})`,
+        backgroundImage: `url(${UPNVJ})`,
       }}
     >
       <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>

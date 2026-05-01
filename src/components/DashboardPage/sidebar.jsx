@@ -4,7 +4,7 @@ import profile from "@/assets/profile.png";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, FileText, UserCircle, LogOut } from "lucide-react";
 
-export default function Sidebar({ activeMenu, setActiveMenu }) {
+export default function Sidebar({ activeMenu, setActiveMenu, onLogoutClick }) {
   const navigate = useNavigate(); 
 
   const handleLogout = () => {
@@ -62,7 +62,7 @@ export default function Sidebar({ activeMenu, setActiveMenu }) {
         </nav>
       </div>
 
-      <button onClick={() => navigate("/")} className="flex items-center gap-3 px-5 py-3 text-sm font-bold opacity-80 hover:opacity-100">
+      <button onClick={onLogoutClick} className="flex items-center gap-3 px-5 py-3 text-sm font-bold opacity-80 hover:opacity-100">
         <LogOut size={20} /> Logout
       </button>
       

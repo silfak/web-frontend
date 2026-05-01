@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
+import { useNavigate } from "react-router-dom";
 import SidebarOB from "@/components/DashboardOBPage/SidebarOB";
 import Header from "@/components/DashboardOBPage/Header";
 import Footer from "@/components/DashboardOBPage/Footer";
+import { Send, LogOut } from "lucide-react";
 
 // views
 import BerandaOB from "@/components/DashboardOBPage/Views/BerandaOB";
@@ -9,6 +11,8 @@ import ProfileOB from "@/components/DashboardOBPage/Views/ProfileOB";
 import LaporanOB from "@/components/DashboardOBPage/Views/LaporanOB";
 import DetailLaporanOB from "@/components/DashboardOBPage/Views/DetailLaporanOB";
 import CreateReportModal from "@/components/DashboardOBPage/CreateReportModal";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import Toast from "@/components/DashboardOBPage/Toast";
 
 export default function DashboardOB() {
   const [activeMenu, setActiveMenu] = useState("Beranda");
@@ -16,6 +20,16 @@ export default function DashboardOB() {
   // State untuk mengontrol apakah sedang melihat tabel (List) atau Detail Laporan
   const [viewState, setViewState] = useState("List"); 
   const [selectedReport, setSelectedReport] = useState(null);
+
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
+  const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
+  
+  const navigate = useNavigate(); 
+  
+  // Update fungsi handleLogout
+  const executeLogout = () => {
+      navigate("/"); // Navigasi sebenarnya
+    };
 
   // 1. STATE DATA UTAMA (Mulai dari array kosong untuk simulasi OB)
   const [reports, setReports] = useState([]); 
@@ -29,6 +43,16 @@ export default function DashboardOB() {
     ];
     setReports(dummyData);
     setIsModalOpen(false);
+
+ setToast({
+  show: true,
+    message: (
+      <>
+        Laporan operasional masuk!
+        Tugas baru ditambahkan ke list.
+      </>
+    )
+    });
   };
   
   // Fungsi untuk pindah menu dari Sidebar
@@ -43,9 +67,37 @@ export default function DashboardOB() {
       setViewState("Detail");
   };
 
+  const [toast, setToast] = useState({ show: false, message: "" });
+
+  // --- FUNGSI UPDATE STATUS  ---
+  const handleUpdateStatus = (idLaporan, statusBaru, catatanBaru) => {
+  // 1. Update array utama agar di tabel berubah
+  const updatedData = reports.map((r) => 
+    r.id === idLaporan ? { ...r, status: statusBaru, catatan: catatanBaru } : r
+  );
+  setReports(updatedData);
+
+  // 2. Update state report agar tampilan detail berubah
+  if (selectedReport && selectedReport.id === idLaporan) {
+    setSelectedReport({ ...selectedReport, status: statusBaru, catatan: catatanBaru });
+  }
+
+  // --- AKTIFKAN TOAST ---
+  const statusLabel = statusBaru === "Inprogress" ? "In Progress" : statusBaru;
+
+  setToast({
+    show: true,
+    message: `Status laporan berhasil diperbarui menjadi ${statusLabel}`
+  });
+};
+
   return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
-      <SidebarOB activeMenu={activeMenu} setActiveMenu={changeMenu} />
+      <SidebarOB 
+        activeMenu={activeMenu} 
+        setActiveMenu={changeMenu} 
+        onLogoutClick={() => setIsConfirmLogoutOpen(true)} 
+      />
 
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="p-10 flex-1">
@@ -57,6 +109,7 @@ export default function DashboardOB() {
             reports={reports}
           />
 
+          {/* bagian view */}
           <div className="mt-4">
             {/* --- BERANDA OB --- */}
             {activeMenu === "Beranda" && (
@@ -69,6 +122,7 @@ export default function DashboardOB() {
                 : <DetailLaporanOB
                     report={selectedReport} 
                     onBack={() => setViewState("List")} 
+                    onUpdateStatus={(statusBaru, catatanBaru) => handleUpdateStatus(selectedReport.id, statusBaru, catatanBaru)}
                   />
             )}
 
@@ -83,21 +137,62 @@ export default function DashboardOB() {
                 : <DetailLaporanOB 
                     report={selectedReport} 
                     onBack={() => setViewState("List")} 
+                    onUpdateStatus={(statusBaru, catatanBaru) => handleUpdateStatus(selectedReport.id, statusBaru, catatanBaru)}
                   />
             )}
 
-            {activeMenu === "Profile" && <ProfileOB />}
+            {activeMenu === "Profile" && (
+              <ProfileOB 
+                onShowToast={(msg) => setToast({ show: true, message: msg })} 
+              />
+            )}
           </div>
         </div>
         <Footer />
       </div>
 
-      {/* --- 4. KIRIM FUNGSI KE MODAL --- */}
+      {/* --- 4. FUNGSI MODAL --- */}
       <CreateReportModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSimulateSubmit={handleSimulateSubmit} 
+        onConfirmClick={() => setIsConfirmSubmitOpen(true)} 
       />
+
+      {/* --- MODAL KONFIRMASI KIRIM LAPORAN --- */}
+      <ConfirmationModal 
+        isOpen={isConfirmSubmitOpen}
+        onClose={() => setIsConfirmSubmitOpen(false)}
+        onConfirm={() => {
+          handleSimulateSubmit();
+          setIsConfirmSubmitOpen(false);
+        }}
+        title="Kirim Laporan Ini?"
+        description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
+        confirmText="Ya, Kirim"
+        cancelText="Batal"
+        icon={Send}
+        variant="green"
+      />
+
+      {/* --- MODAL KONFIRMASI LOGOUT --- */}
+      <ConfirmationModal 
+        isOpen={isConfirmLogoutOpen}
+        onClose={() => setIsConfirmLogoutOpen(false)}
+        onConfirm={executeLogout}
+        title="Keluar dari Sistem?"
+        description="Kamu akan keluar dari sistem. Pastikan semua pekerjaanmu sudah tersimpan."
+        confirmText="Ya, Keluar"
+        cancelText="Batal"
+        icon={LogOut}
+        variant="red"
+      />
+
+      {/* Komponen Toast paling luar */}
+      <Toast 
+        isOpen={toast.show} 
+        message={toast.message} 
+        onClose={() => setToast({ show: false, message: "" })} 
+      /> 
     </div>
   );
 }
