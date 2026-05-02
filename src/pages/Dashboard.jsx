@@ -43,23 +43,30 @@ export default function Dashboard() {
  
   // FUNGSI SIMULASI (Untuk dipanggil saat klik "Kirim" di Modal)
   const handleSimulateSubmit = () => {
+
+    if (pendingReport) {
     const dummyData = [
       { tgl: "17 April 2026", lokasi: "Gedung Dewi Sartika", ruang: "Lantai 3, Ruang FIK-301", masalah: "Pemborosan AC", status: "Reported" },
       { tgl: "18 April 2026", lokasi: "Gedung Ki Hajar Dewantara", ruang: "Lantai 2, Ruang FIK-202", masalah: "Toilet Rusak", status: "Inprogress" },
       { tgl: "19 April 2026", lokasi: "Gedung Dewi Sartika", ruang: "Lantai 2, Ruang FIK-204", masalah: "Pemborosan AC", status: "Resolved" }
     ];
     setReports(dummyData); // Isi data laporan
+
+    setReports([pendingReport, ...reports]);
+    setPendingReport(null); 
+  }
+
     setIsModalOpen(false); // Tutup modal
 
      // --- TOAST ---
     setToast({
       show: true,
-      message: (
-      <>
-        Laporan berhasil dikirim!
-        Cek detailnya di menu Laporan.
-      </>
-    )
+      message: {
+      title: "Laporan Berhasil Dikirim",
+      desc: activeMenu === "Beranda" || activeMenu === "Laporan" 
+        ? "Laporan kamu sudah masuk dan akan segera ditangani"
+        : "Laporan fasilitas kamu sudah tercatat di sistem"
+    }
     });
   };
 
@@ -69,6 +76,15 @@ export default function Dashboard() {
   const executeLogout = () => {
     navigate("/"); // Navigasi sebenarnya
   };
+
+  const [pendingReport, setPendingReport] = useState(null);
+
+  // Fungsi yang dipanggil saat klik "Kirim Laporan" di Modal
+  const handleOpenConfirmation = (data) => {
+    setPendingReport(data); // Simpan data dari modal
+    setIsConfirmSubmitOpen(true); // Buka modal konfirmasi
+  };
+
 
   return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
@@ -129,17 +145,14 @@ export default function Dashboard() {
       <CreateReportModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onConfirmClick={() => setIsConfirmSubmitOpen(true)} 
+        onConfirmClick={handleOpenConfirmation} 
       />
 
       {/* --- MODAL KONFIRMASI KIRIM LAPORAN --- */}
       <ConfirmationModal 
         isOpen={isConfirmSubmitOpen}
         onClose={() => setIsConfirmSubmitOpen(false)}
-        onConfirm={() => {
-          handleSimulateSubmit();
-          setIsConfirmSubmitOpen(false);
-        }}
+        onConfirm={handleSimulateSubmit}
         title="Kirim Laporan Ini?"
         description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
         confirmText="Ya, Kirim"

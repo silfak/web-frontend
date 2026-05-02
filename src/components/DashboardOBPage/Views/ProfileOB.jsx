@@ -6,7 +6,7 @@ export default function ProfileOB({ onShowToast }) {
     e.preventDefault();
     // Simulasi berhasil ganti password
     if (onShowToast) {
-      onShowToast("Password berhasil diganti");
+      onShowToast("Password berhasil diganti!");
     }
   };
 
