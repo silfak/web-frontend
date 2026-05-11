@@ -28,7 +28,7 @@ export default function LaporanView() {
   const namaDepan = ["Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon"];
   const namaBelakang = ["Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe"];
 
-  const isEmpty = false;
+  const isEmpty = false; // ubah true untuk empty
 
   const dummyData = isEmpty
     ? []

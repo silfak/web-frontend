@@ -68,8 +68,8 @@ export default function AdminDashboard() {
     };
   });
 
-  // 🔥 INI DATA YANG DIPAKAI SEMUA HALAMAN
-  const laporanData = dummyData; //Ubah []supaya empty state nya berjalan
+  //  INI DATA YANG DIPAKAI SEMUA HALAMAN
+  const laporanData = dummyData; //Ubah []supaya empty state nya berjalan -- ada data dummyData
   const renderContent = () => {
     switch (activeMenu) {
       case "dashboard":

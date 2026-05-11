@@ -31,7 +31,7 @@ const Hero = () => {
     if (validateForm()) {
       console.log("Login Berhasil", formData);
       // Logika simulasi login mahasiswa/OB bisa ditaruh di sini
-      navigate("/dashboard"); 
+      navigate("/dashboardMahasiswa"); 
     }
   };
 
