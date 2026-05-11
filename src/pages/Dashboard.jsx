@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "@/components/DashboardPage/Sidebar";
-import Header from "@/components/DashboardPage/Header";
+import Sidebar from "@/components/DashboardPage/sidebar";
+import Header from "@/components/DashboardPage/header";
 import Footer from "@/components/DashboardPage/Footer";
 import { Send, LogOut } from "lucide-react";
 
