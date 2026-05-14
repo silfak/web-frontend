@@ -1,15 +1,20 @@
-import { Link } from "react-router-dom";
-
-import bg from "@/assets/LandingPage/landingpage.png";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { ClipboardPlus } from "lucide-react";
+import UPNVJ from "@/assets/LandingPage/landingpage.png";
 
 const Hero = () => {
+
+  const navigate = useNavigate(); 
+
+  const handleLaporClick = () => {
+    navigate("/dashboardMahasiswa");
+  };
+
   return (
     <section
       className="relative min-h-[90vh] flex items-center bg-cover bg-top md:bg-center"
       style={{
-        backgroundImage: `url(${bg})`,
+        backgroundImage: `url(${UPNVJ})`,
       }}
     >
       <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
@@ -28,14 +33,14 @@ const Hero = () => {
         </p>
 
         <div className="flex">
-          <Link to="/">
-            <Button
-              variant="outline"
-              className="mt-6 bg-[#166534] text-white px-3 py-5 rounded-lg hover:bg-[#15803D] transition"
+          <div className="flex">
+            <button 
+              onClick={handleLaporClick}
+              className="mt-6 bg-[#166534] text-white px-3 py-2 rounded-lg hover:bg-[#15803D] transition flex items-center gap-2"
             >
-              <ClipboardPlus color="white" size={20} /> Mulai Melapor
-            </Button>
-          </Link>
+              <ClipboardPlus color="white" size={18} /> Melapor
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -43,3 +48,4 @@ const Hero = () => {
 };
 
 export default Hero;
+
