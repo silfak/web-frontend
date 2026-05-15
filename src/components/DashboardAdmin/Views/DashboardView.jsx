@@ -105,8 +105,8 @@ export default function DashboardView({ laporanData = [] }) {
           {data.length === 0 ? (
             <EmptyState icon={BarChart3} title="Belum ada data untuk ditampilkan" desc="Belum ada data laporan. Tren kategori masalah akan muncul setelah ada laporan masuk" />
           ) : (
-            <div className="w-full h-64">
-              <ResponsiveContainer>
+            <div className="w-full h-64 relative z-0">
+  <ResponsiveContainer>
                 <BarChart data={data}>
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -167,17 +167,16 @@ export default function DashboardView({ laporanData = [] }) {
 
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
-              <option>Januari</option>
-              <option>Februari</option>
-              <option>Maret</option>
-              <option>April</option>
-            </select>
+           {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((bulan) => (
+           <option key={bulan}>{bulan}</option>
+           ))}
+          </select>
 
             <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
-              <option>2024</option>
-              <option>2025</option>
-              <option>2026</option>
-            </select>
+             {Array.from({ length: new Date().getFullYear() - 2023 }, (_, i) => 2024 + i).map((tahun) => (
+             <option key={tahun}>{tahun}</option>
+             ))}
+             </select>
 
             <button
               onClick={triggerToast}

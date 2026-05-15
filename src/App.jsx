@@ -1,30 +1,49 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-// macam - macam halaman
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import RegistPage from "@/pages/RegistPage";
-
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "@/pages/Dashboard";
 import DashboardOB from "@/pages/DashboardOB";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 const App = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegistPage />} />
+      <AuthProvider>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegistPage />} />
 
-        <Route path="/dashboardMahasiswa" element={<Dashboard />} />
-        <Route path="/dashboardOB" element={<DashboardOB />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+          {/* Protected - Mahasiswa */}
+          <Route path="/dashboardMahasiswa" element={
+            <ProtectedRoute allowedRoles={["mahasiswa"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
 
-        {/* error 404 */}
-        <Route path="*" element={<h1 className="text-center mt-20 font-bold">Halaman Tidak Ditemukan! (404)</h1>} />
-      </Routes>
+          {/* Protected - OB */}
+          <Route path="/dashboardOB" element={
+            <ProtectedRoute allowedRoles={["ob"]}>
+              <DashboardOB />
+            </ProtectedRoute>
+          } />
+
+          {/* Protected - Admin */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="*" element={<h1 className="text-center mt-20 font-bold">Halaman Tidak Ditemukan! (404)</h1>} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 };
