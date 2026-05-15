@@ -1,18 +1,19 @@
 import { createContext, useContext, useState } from "react";
 import api from "@/lib/axios";
+import Cookies from "js-cookie";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-  try {
-    const saved = localStorage.getItem("user");
-    return saved && saved !== "undefined" ? JSON.parse(saved) : null;
-  } catch {
-    localStorage.removeItem("user");
-    return null;
-  }
-});
+    try {
+      const saved = Cookies.get("user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      Cookies.remove("user");
+      return null;
+    }
+  });
 
   const login = async (email, password) => {
     const res = await api.post("/api/auth/login", { email, password });
@@ -26,8 +27,8 @@ export function AuthProvider({ children }) {
     };
 
     setUser(user);
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", token);
+    Cookies.set("user", JSON.stringify(user), { expires: 7 });
+    Cookies.set("token", token, { expires: 7 });
     return { user, token };
   };
 
@@ -44,8 +45,8 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    Cookies.remove("user");
+    Cookies.remove("token");
   };
 
   return (
