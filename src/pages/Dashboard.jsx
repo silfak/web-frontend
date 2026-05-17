@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
 import Sidebar from "@/components/DashboardPage/sidebar";
 import Header from "@/components/DashboardPage/header";
 import Footer from "@/components/DashboardPage/Footer";
@@ -14,31 +14,41 @@ import CreateReportModal from "@/components/DashboardPage/CreateReportModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import Toast from "@/components/DashboardOBPage/Toast";
 
-// 1. INTEGRASI
+// INTEGRASI
 import api from "@/lib/axios";
 import { useAuth } from "@/context/AuthContext";
 
+// Wrapper detail laporan mahasiswa
+function DetailLaporanMahasiswaWrapper({ reports }) {
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const report = location.state?.report ?? reports.find((r) => String(r.id) === id);
+
+  if (!report) return <Navigate to="/laporan" replace />;
+
+  return (
+    <DetailLaporanView 
+      report={report} 
+      onBack={() => navigate("/laporan")} 
+    />
+  );
+}
+
 export default function Dashboard() {
-  // 2. INTEGRATION
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const path = location.pathname;
 
-  const [activeMenu, setActiveMenu] = useState("Beranda");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // State untuk mengontrol apakah sedang melihat tabel (List) atau Detail Laporan
-  const [viewState, setViewState] = useState("List"); 
-  const [selectedReport, setSelectedReport] = useState(null);
-
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
-
   const [toast, setToast] = useState({ show: false, message: "" });
   const [reports, setReports] = useState([]);
   const [pendingReport, setPendingReport] = useState(null);
 
-  const navigate = useNavigate();
-
-  // --- DATA MAPPING ---
   const mapBackendReports = (backendData) => {
     return backendData.map((item) => ({
       id: item.id,
@@ -53,11 +63,9 @@ export default function Dashboard() {
     }));
   };
 
-  // 3. INTEGRASI: Fetch data riwayat laporan asli dari server saat halaman dimuat
   const fetchReportsData = async () => {
     try {
       const res = await api.get("/api/reports");
-      // Kirim data mentah BE ke fungsi mapper sebelum disimpan ke state
       const mappedData = mapBackendReports(res.data.data || []);
       setReports(mappedData);
     } catch (err) {
@@ -69,24 +77,20 @@ export default function Dashboard() {
     fetchReportsData();
   }, []);
 
-  // Fungsi untuk pindah menu dari Sidebar
-  const changeMenu = (menu) => {
-    setActiveMenu(menu);
-    setViewState("List"); // Setiap pindah menu, balikkan ke tampilan List
+  const getTitle = () => {
+    if (path === "/profile") return "Profile";
+    if (path.startsWith("/laporan")) return "Laporan";
+    return "Beranda";
   };
 
-  // Fungsi untuk melihat detail dari tabel
   const showDetail = (report) => {
-    setSelectedReport(report);
-    setViewState("Detail");
+    navigate(`/laporan/${report.id}`, { state: { report } });
   };
  
-  // 4. INTEGRASI: Eksekusi Kirim Data Riil ke POST /api/reports Backend
   const handleActualSubmit = async () => {
     if (!pendingReport) return;
 
     try {
-      // Ambil kerangka payload murni yang diminta oleh dokumentasi Postman BE
       const payload = {
         room_id: pendingReport.room_id,
         title: pendingReport.title,
@@ -97,14 +101,10 @@ export default function Dashboard() {
 
       // Tembak data ke database
       await api.post("/api/reports", payload);
-
-      // Tarik ulang data terbaru dari server agar tabel riwayat langsung ter-update otomatis
       await fetchReportsData();
 
-      // Reset State & Tutup Modal
       setIsConfirmSubmitOpen(false);
       setPendingReport(null);
-
       setToast({
         show: true,
         message: {
@@ -118,7 +118,6 @@ export default function Dashboard() {
     }
   };
 
-  // 5. INTEGRASI: Sinkronisasi fungsi logout database
   const executeLogout = async () => {
     try {
       if (logout) await logout();
@@ -129,69 +128,59 @@ export default function Dashboard() {
     }
   };
 
-  // Fungsi yang dipanggil saat klik "Kirim Laporan" di Modal
   const handleOpenConfirmation = (data) => {
     setPendingReport(data); 
-    setIsModalOpen(false); // Tutup modal utama pelaporan
+    setIsModalOpen(false);
     setIsConfirmSubmitOpen(true); 
   };
 
+  const renderContent = () => {
+    if (path.startsWith("/laporan/")) {
+      return <DetailLaporanMahasiswaWrapper reports={reports} />;
+    }
+    if (path === "/laporan") {
+      return (
+        <LaporanView 
+          reports={reports} 
+          onOpenModal={() => setIsModalOpen(true)}
+          onViewDetail={showDetail} 
+        />
+      );
+    }
+    if (path === "/profile") {
+      return (
+        <ProfileView 
+          user={user} 
+          onShowToast={(msg) => setToast({ show: true, message: msg })} 
+        />
+      );
+    }
+    return (
+      <BerandaView 
+        reports={reports} 
+        onOpenModal={() => setIsModalOpen(true)} 
+        onViewDetail={showDetail} 
+      />
+    );
+  };
 
   return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
-      {/* 6. INTEGRASI: Salurkan data user riil ke Sidebar */}
       <Sidebar 
         user={user}
-        activeMenu={activeMenu} 
-        setActiveMenu={changeMenu} 
         onLogoutClick={() => setIsConfirmLogoutOpen(true)} 
       />
 
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="p-10 flex-1">
           <Header 
-            title={activeMenu} 
-            onProfileClick={() => changeMenu("Profile")} 
+            title={getTitle()} 
+            onProfileClick={() => navigate("/profile")} 
             onViewDetail={showDetail}
             reports={reports}
           />
-
           <div className="mt-4">
-            {/* --- BERANDA --- */}
-            {activeMenu === "Beranda" && (
-              viewState === "List" 
-                ? <BerandaView 
-                    reports={reports} 
-                    onOpenModal={() => setIsModalOpen(true)} 
-                    onViewDetail={showDetail} 
-                  />
-                : <DetailLaporanView 
-                    report={selectedReport} 
-                    onBack={() => setViewState("List")} 
-                  />
-            )}
-
-            {/* --- LAPORAN --- */}
-            {activeMenu === "Laporan" && (
-              viewState === "List" 
-                ? <LaporanView 
-                    reports={reports} 
-                    onOpenModal={() => setIsModalOpen(true)}
-                    onViewDetail={showDetail} 
-                  />
-                : <DetailLaporanView 
-                    report={selectedReport} 
-                    onBack={() => setViewState("List")} 
-                  />
-            )}
-
-            {/* --- PROFILE --- */}
-            {activeMenu === "Profile" && (
-              <ProfileView 
-                user={user} // 7. INTEGRASI: Salurkan data user riil ke ProfileView
-                onShowToast={(msg) => setToast({ show: true, message: msg })} 
-              />
-            )}
+            {renderContent()}
           </div>
         </div>
         <Footer />
@@ -203,11 +192,10 @@ export default function Dashboard() {
         onConfirmClick={handleOpenConfirmation} 
       />
 
-      {/* --- MODAL KONFIRMASI KIRIM LAPORAN --- */}
       <ConfirmationModal 
         isOpen={isConfirmSubmitOpen}
         onClose={() => setIsConfirmSubmitOpen(false)}
-        onConfirm={handleActualSubmit} // Ganti fungsi simulasi dengan fungsi riil database
+        onConfirm={handleActualSubmit}
         title="Kirim Laporan Ini?"
         description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
         confirmText="Ya, Kirim"
@@ -216,7 +204,6 @@ export default function Dashboard() {
         variant="green"
       />
 
-      {/* --- MODAL KONFIRMASI LOGOUT --- */}
       <ConfirmationModal 
         isOpen={isConfirmLogoutOpen}
         onClose={() => setIsConfirmLogoutOpen(false)}

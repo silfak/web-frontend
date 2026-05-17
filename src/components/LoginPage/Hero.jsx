@@ -138,6 +138,44 @@ const Hero = () => {
             Sign Up
           </Link>
         </p>
+
+        {/* ===== DEV ONLY — Bypass Auth ===== */}
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <p className="text-xs text-gray-400 font-bold mb-3 uppercase tracking-wider">Dev Shortcuts (No Backend)</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                document.cookie = 'user={"id":1,"role":"mahasiswa"}; path=/';
+                window.location.href = '/dashboard';
+              }}
+              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
+            >
+              Mahasiswa
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.cookie = 'user={"id":1,"role":"ob"}; path=/';
+                window.location.href = '/dashboard';
+              }}
+              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
+            >
+              OB
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.cookie = 'user={"id":1,"role":"admin"}; path=/';
+                window.location.href = '/dashboard';
+              }}
+              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
+            >
+              Admin
+            </button>
+          </div>
+        </div>
+        {/* ===== END DEV ONLY ===== */}
       </div>
     </section>
   );

@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import FilterSection from "@/components/DashboardAdmin/FilterSection";
 import TableLaporan from "@/components/DashboardAdmin/TableLaporan";
 import EmptyState from "@/components/DashboardAdmin/EmptyState";
-import DetailLaporan from "@/components/DashboardAdmin/Views/DetailLaporan";
 import { ClipboardList } from "lucide-react";
 import type { FiltersState, LaporanAdmin, LaporanAdminStatus } from "@/types";
 
 export default function LaporanView() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<FiltersState>({
     search: "",
     status: "",
@@ -14,8 +15,6 @@ export default function LaporanView() {
     endDate: "",
     page: 1,
   });
-
-  const [selectedLaporan, setSelectedLaporan] = useState<LaporanAdmin | null>(null);
 
   const statuses: LaporanAdminStatus[] = ["reported", "inprogress", "resolved"];
 
@@ -55,14 +54,6 @@ export default function LaporanView() {
     );
   });
 
-  if (selectedLaporan) {
-    return (
-      <DetailLaporan
-        laporan={selectedLaporan}
-        onKembali={() => setSelectedLaporan(null)}
-      />
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -88,7 +79,7 @@ export default function LaporanView() {
           data={filteredData}
           page={filters.page}
           setPage={(p) => setFilters((prev) => ({ ...prev, page: p }))}
-          onLihatDetail={(laporan) => setSelectedLaporan(laporan)}
+          onLihatDetail={(laporan) => navigate(`/laporan/${laporan.id}`, { state: { laporan } })}
         />
       )}
     </div>
