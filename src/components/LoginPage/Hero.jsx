@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 import logo from "@/assets/LandingPage/logosilfak.png";
 import UPNVJ from "@/assets/LandingPage/landingpage.png";
@@ -8,9 +9,12 @@ import { Mail, Lock, Eye, EyeOff, DoorOpen } from "lucide-react";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,35 +30,40 @@ const Hero = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Login Berhasil", formData);
-      // Logika simulasi login mahasiswa/OB bisa ditaruh di sini
-      navigate("/dashboardMahasiswa"); 
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setApiError("");
+
+    try {
+      const data = await login(formData.email, formData.password);
+      const role = data.user.role;
+
+      if (role === "admin") navigate("/dashboard/admin");
+      else if (role === "ob") navigate("/dashboard/ob");
+      else navigate("/dashboard/mahasiswa");
+
+    } catch (err) {
+      setApiError(err.response?.data?.message || "Email atau password salah!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <section className="relative flex-1 flex items-center justify-center p-4 md:p-10 min-h-175 overflow-hidden">
       
-      {/* Background - MUNCUL DI DESKTOP */}
       <div className="absolute inset-0 z-0 hidden md:block">
-        <img 
-          src={UPNVJ} 
-          alt="Campus Background" 
-          className="w-full h-full object-cover"
-        />
-        {/* Overlay hijau */}
+        <img src={UPNVJ} alt="Campus Background" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-[#107C41]/10 backdrop-blur-[1.5px]"></div>
       </div>
 
-      {/* Background Solid - MUNCUL DI MOBILE */}
       <div className="absolute inset-0 z-0 md:hidden bg-gray-50">
         <div className="absolute inset-0 bg-[#107C41]/5 opacity-40"></div>
       </div>
 
-      {/* CARD FORM LOGIN (Menyesuaikan desain gambar pertama) */}
       <div className="relative z-10 w-full max-w-140 bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 text-center border border-gray-100">
         <div className="mb-8 flex flex-col items-center">
           <img src={logo} className="h-24 mb-2" />
@@ -63,6 +72,12 @@ const Hero = () => {
             Masuk ke Portal Silfak
           </p>
         </div>
+
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium rounded-xl px-4 py-3 mb-4">
+            {apiError}
+          </div>
+        )}
 
         <form className="space-y-5 text-left" onSubmit={handleSubmit}>
           <div>
@@ -108,8 +123,12 @@ const Hero = () => {
             {errors.password && <p className="text-red-500 text-[10px] mt-1 font-bold tracking-tight">{errors.password}</p>}
           </div>
 
-          <Button type="submit" className="w-full bg-[#107C41] hover:bg-[#0d6334] text-white font-bold py-5.5 rounded-xl flex shadow-lg transition-all active:scale-[0.98] mt-4 text-lg tracking-widest">
-            Login <DoorOpen color="white" size={22} className="ml-2" />
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#107C41] hover:bg-[#0d6334] text-white font-bold py-5.5 rounded-xl flex shadow-lg transition-all active:scale-[0.98] mt-4 text-lg tracking-widest disabled:opacity-70"
+          >
+            {loading ? "Memuat..." : <>Login <DoorOpen color="white" size={22} className="ml-2" /></>}
           </Button>
         </form>
 

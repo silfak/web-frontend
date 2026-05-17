@@ -7,7 +7,7 @@ const Hero = () => {
   const navigate = useNavigate(); 
 
   const handleLaporClick = () => {
-    navigate("/dashboardMahasiswa");
+    navigate("/login");
   };
 
   return (

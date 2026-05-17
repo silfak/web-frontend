@@ -1,17 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import logo from "@/assets/LandingPage/logosilfak.png";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  FileText,
-  Settings2,
-  UserCircle,
-  ChevronRight,
-  LogOut,
+  LayoutDashboard, FileText, Settings2, UserCircle,
+  ChevronRight, LogOut,
 } from "lucide-react";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function AdminSidebar({ activeMenu, setActiveMenu }) {
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menuItems = [
     { key: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -27,22 +25,27 @@ export default function AdminSidebar({ activeMenu, setActiveMenu }) {
   return (
     <div className="w-full md:w-64 bg-[#107C41] text-white md:fixed md:h-screen flex flex-col">
 
-      {/* TOP */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="Konfirmasi Logout"
+        description="Apakah kamu yakin ingin keluar dari SILFAKADMIN?"
+        confirmText="Ya, Logout"
+        cancelText="Batal"
+        icon={LogOut}
+        variant="red"
+      />
+
       <div>
-        {/* LOGO */}
         <div className="flex items-center mb-4 gap-1 p-4">
           <img src={logo} alt="logo" className="h-16 w-16 object-contain" />
           <div className="leading-tight">
-            <h1 className="text-xl font-bold tracking-tighter">
-              SILFAKADMIN
-            </h1>
-            <p className="text-[11px] text-white/70 mt-1">
-              Institutional Management
-            </p>
+            <h1 className="text-xl font-bold tracking-tighter">SILFAKADMIN</h1>
+            <p className="text-[11px] text-white/70 mt-1">Institutional Management</p>
           </div>
         </div>
 
-        {/* MENU */}
         <div className="p-3 space-y-2 mt-2">
           {menuItems.map((item) => (
             <button
@@ -58,17 +61,15 @@ export default function AdminSidebar({ activeMenu, setActiveMenu }) {
                 <item.icon size={16} />
                 {item.name}
               </div>
-
               {item.arrow && <ChevronRight size={16} />}
             </button>
           ))}
         </div>
       </div>
 
-      {/* LOGOUT */}
       <div className="p-4 mt-auto">
         <button
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-white p-6"
         >
           <LogOut size={17} />

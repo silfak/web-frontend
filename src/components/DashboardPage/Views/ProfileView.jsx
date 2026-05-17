@@ -1,6 +1,6 @@
 import profile from "@/assets/profile.png";
 
-export default function ProfileView({ onShowToast }) {
+export default function ProfileView({ user, onShowToast }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,15 +22,21 @@ export default function ProfileView({ onShowToast }) {
         <div className="w-full space-y-6">
           <div>
             <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Nama</label>
-            <div className="bg-gray-50 p-4 rounded-2xl font-bold text-gray-700 mt-1.5">Rafi Fauzi</div>
+            <div className="bg-gray-50 p-4 rounded-2xl font-bold text-gray-700 mt-1.5">
+              {user?.name || user?.nama || "Memuat nama..."}
+            </div>
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Email</label>
-            <div className="bg-gray-50 p-4 rounded-2xl font-bold text-gray-700 mt-1.5 text-xs truncate">2410512015@mahasiswa.upnvj.ac.id</div>
+            <div className="bg-gray-50 p-4 rounded-2xl font-bold text-gray-700 mt-1.5 text-xs truncate">
+              {user?.email || "Memuat email..."}
+            </div>
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Role</label>
-            <div className="bg-[#E7F3ED] text-[#107C41] px-5 py-1.5 rounded-full text-[10px] font-bold w-fit mt-2 uppercase tracking-wider">Mahasiswa</div>
+            <div className="bg-[#E7F3ED] text-[#107C41] px-5 py-1.5 rounded-full text-[10px] font-bold w-fit mt-2 uppercase tracking-wider">
+              {user?.role || "Mahasiswa"}
+            </div>
           </div>
         </div>
       </div>
