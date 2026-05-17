@@ -12,7 +12,7 @@ export default function ConfirmationModal({
   cancelText,
   icon: Icon,
   variant = "green",
-  warningText,
+  warningText = undefined,
 }) {
   if (!isOpen) return null;
 

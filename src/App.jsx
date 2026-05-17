@@ -43,6 +43,11 @@ const App = () => {
 
           {/* 404 */}
           <Route path="*" element={<h1 className="text-center mt-20 font-bold">Halaman Tidak Ditemukan! (404)</h1>} />
+
+          {/* ===== DEV ONLY — Hapus sebelum production ===== */}
+          <Route path="/dashboardOB" element={<DashboardOB />} />
+          <Route path="/dashboardAdmin" element={<AdminDashboard />} />
+          {/* ===== END DEV ONLY ===== */}
         </Routes>
       </AuthProvider>
     </BrowserRouter>
