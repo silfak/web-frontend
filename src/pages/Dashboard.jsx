@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/DashboardPage/sidebar";
 import Header from "@/components/DashboardPage/header";
@@ -14,7 +14,14 @@ import CreateReportModal from "@/components/DashboardPage/CreateReportModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import Toast from "@/components/DashboardOBPage/Toast";
 
+// 1. INTEGRASI
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
+
 export default function Dashboard() {
+  // 2. INTEGRATION
+  const { user, logout } = useAuth();
+
   const [activeMenu, setActiveMenu] = useState("Beranda");
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -26,6 +33,41 @@ export default function Dashboard() {
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
 
   const [toast, setToast] = useState({ show: false, message: "" });
+  const [reports, setReports] = useState([]);
+  const [pendingReport, setPendingReport] = useState(null);
+
+  const navigate = useNavigate();
+
+  // --- DATA MAPPING ---
+  const mapBackendReports = (backendData) => {
+    return backendData.map((item) => ({
+      id: item.id,
+      tgl: item.created_at 
+        ? new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
+        : "Baru saja",
+      lokasi: item.room?.building?.name || "Tidak Diketahui",
+      ruang: item.room ? `${item.room.name} (Lantai ${item.room.floor})` : "Tidak Diketahui",
+      masalah: item.category?.name || item.title || "Masalah Fasilitas",
+      deskripsi: item.description || "",
+      status: item.status || "Reported",
+    }));
+  };
+
+  // 3. INTEGRASI: Fetch data riwayat laporan asli dari server saat halaman dimuat
+  const fetchReportsData = async () => {
+    try {
+      const res = await api.get("/api/reports");
+      // Kirim data mentah BE ke fungsi mapper sebelum disimpan ke state
+      const mappedData = mapBackendReports(res.data.data || []);
+      setReports(mappedData);
+    } catch (err) {
+      console.error("Gagal menarik riwayat laporan dari database:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportsData();
+  }, []);
 
   // Fungsi untuk pindah menu dari Sidebar
   const changeMenu = (menu) => {
@@ -38,57 +80,68 @@ export default function Dashboard() {
     setSelectedReport(report);
     setViewState("Detail");
   };
-
-  const [reports, setReports] = useState([]);
  
-  // FUNGSI SIMULASI (Untuk dipanggil saat klik "Kirim" di Modal)
-  const handleSimulateSubmit = () => {
+  // 4. INTEGRASI: Eksekusi Kirim Data Riil ke POST /api/reports Backend
+  const handleActualSubmit = async () => {
+    if (!pendingReport) return;
 
-    if (pendingReport) {
-    const dummyData = [
-      { tgl: "17 April 2026", lokasi: "Gedung Dewi Sartika", ruang: "Lantai 3, Ruang FIK-301", masalah: "Pemborosan AC", status: "Reported" },
-      { tgl: "18 April 2026", lokasi: "Gedung Ki Hajar Dewantara", ruang: "Lantai 2, Ruang FIK-202", masalah: "Toilet Rusak", status: "Inprogress" },
-      { tgl: "19 April 2026", lokasi: "Gedung Dewi Sartika", ruang: "Lantai 2, Ruang FIK-204", masalah: "Pemborosan AC", status: "Resolved" }
-    ];
-    setReports(dummyData); // Isi data laporan
+    try {
+      // Ambil kerangka payload murni yang diminta oleh dokumentasi Postman BE
+      const payload = {
+        room_id: pendingReport.room_id,
+        title: pendingReport.title,
+        description: pendingReport.description,
+        priority: pendingReport.priority,
+        reporter_id: pendingReport.reporter_id
+      };
 
-    setReports([pendingReport, ...reports]);
-    setPendingReport(null); 
-  }
+      // Tembak data ke database
+      await api.post("/api/reports", payload);
 
-    setIsModalOpen(false); // Tutup modal
+      // Tarik ulang data terbaru dari server agar tabel riwayat langsung ter-update otomatis
+      await fetchReportsData();
 
-     // --- TOAST ---
-    setToast({
-      show: true,
-      message: {
-      title: "Laporan Berhasil Dikirim",
-      desc: activeMenu === "Beranda" || activeMenu === "Laporan" 
-        ? "Laporan kamu sudah masuk dan akan segera ditangani"
-        : "Laporan fasilitas kamu sudah tercatat di sistem"
+      // Reset State & Tutup Modal
+      setIsConfirmSubmitOpen(false);
+      setPendingReport(null);
+
+      setToast({
+        show: true,
+        message: {
+          title: "Laporan Berhasil Dikirim",
+          desc: "Laporan fasilitas kamu sudah tercatat di sistem database kampus."
+        }
+      });
+    } catch (err) {
+      console.error("Gagal mengirim laporan baru ke backend:", err);
+      alert("Terjadi kesalahan jaringan saat mengirim laporan.");
     }
-    });
   };
 
-  const navigate = useNavigate(); 
-
-  // Update fungsi handleLogout
-  const executeLogout = () => {
-    navigate("/"); // Navigasi sebenarnya
+  // 5. INTEGRASI: Sinkronisasi fungsi logout database
+  const executeLogout = async () => {
+    try {
+      if (logout) await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Gagal logout:", error);
+      navigate("/login");
+    }
   };
-
-  const [pendingReport, setPendingReport] = useState(null);
 
   // Fungsi yang dipanggil saat klik "Kirim Laporan" di Modal
   const handleOpenConfirmation = (data) => {
-    setPendingReport(data); // Simpan data dari modal
-    setIsConfirmSubmitOpen(true); // Buka modal konfirmasi
+    setPendingReport(data); 
+    setIsModalOpen(false); // Tutup modal utama pelaporan
+    setIsConfirmSubmitOpen(true); 
   };
 
 
   return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
+      {/* 6. INTEGRASI: Salurkan data user riil ke Sidebar */}
       <Sidebar 
+        user={user}
         activeMenu={activeMenu} 
         setActiveMenu={changeMenu} 
         onLogoutClick={() => setIsConfirmLogoutOpen(true)} 
@@ -108,7 +161,7 @@ export default function Dashboard() {
             {activeMenu === "Beranda" && (
               viewState === "List" 
                 ? <BerandaView 
-                    reports={reports} // Kirim data ke Beranda
+                    reports={reports} 
                     onOpenModal={() => setIsModalOpen(true)} 
                     onViewDetail={showDetail} 
                   />
@@ -122,7 +175,7 @@ export default function Dashboard() {
             {activeMenu === "Laporan" && (
               viewState === "List" 
                 ? <LaporanView 
-                    reports={reports} // Kirim data ke Laporan
+                    reports={reports} 
                     onOpenModal={() => setIsModalOpen(true)}
                     onViewDetail={showDetail} 
                   />
@@ -132,8 +185,10 @@ export default function Dashboard() {
                   />
             )}
 
+            {/* --- PROFILE --- */}
             {activeMenu === "Profile" && (
               <ProfileView 
+                user={user} // 7. INTEGRASI: Salurkan data user riil ke ProfileView
                 onShowToast={(msg) => setToast({ show: true, message: msg })} 
               />
             )}
@@ -152,7 +207,7 @@ export default function Dashboard() {
       <ConfirmationModal 
         isOpen={isConfirmSubmitOpen}
         onClose={() => setIsConfirmSubmitOpen(false)}
-        onConfirm={handleSimulateSubmit}
+        onConfirm={handleActualSubmit} // Ganti fungsi simulasi dengan fungsi riil database
         title="Kirim Laporan Ini?"
         description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
         confirmText="Ya, Kirim"
@@ -179,7 +234,6 @@ export default function Dashboard() {
         message={toast.message} 
         onClose={() => setToast({ show: false, message: "" })} 
       />
-
     </div>
   );
 }

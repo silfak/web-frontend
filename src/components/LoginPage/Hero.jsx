@@ -41,9 +41,9 @@ const Hero = () => {
       const data = await login(formData.email, formData.password);
       const role = data.user.role;
 
-      if (role === "admin") navigate("/admin");
-      else if (role === "ob") navigate("/dashboardOB");
-      else navigate("/dashboardMahasiswa");
+      if (role === "admin") navigate("/dashboard/admin");
+      else if (role === "ob") navigate("/dashboard/ob");
+      else navigate("/dashboard/mahasiswa");
 
     } catch (err) {
       setApiError(err.response?.data?.message || "Email atau password salah!");

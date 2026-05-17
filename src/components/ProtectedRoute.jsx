@@ -7,9 +7,9 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === "admin") return <Navigate to="/admin" replace />;
-    if (user.role === "ob") return <Navigate to="/dashboard-ob" replace />;
-    return <Navigate to="/dashboard" replace />;
+    if (user.role === "admin") return <Navigate to="/dashboard/admin" replace />;
+    if (user.role === "ob") return <Navigate to="/dashboard/ob" replace />;
+    return <Navigate to="/dashboard/mahasiswa" replace />;
   }
 
   return children;

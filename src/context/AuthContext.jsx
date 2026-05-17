@@ -21,6 +21,9 @@ export function AuthProvider({ children }) {
 
     const token = data;
     const payload = JSON.parse(atob(token.split('.')[1]));
+
+    console.log("=== ISI PAYLOAD TOKEN BACKEND ===", payload);
+
     const user = {
       id: payload.id,
       role: payload.role.name.toLowerCase(),

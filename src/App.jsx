@@ -21,26 +21,27 @@ const App = () => {
           <Route path="/register" element={<RegistPage />} />
 
           {/* Protected - Mahasiswa */}
-          <Route path="/dashboardMahasiswa" element={
+          <Route path="/dashboard/mahasiswa" element={
             <ProtectedRoute allowedRoles={["mahasiswa"]}>
               <Dashboard />
             </ProtectedRoute>
           } />
 
           {/* Protected - OB */}
-          <Route path="/dashboardOB" element={
+          <Route path="/dashboard/ob" element={
             <ProtectedRoute allowedRoles={["ob"]}>
               <DashboardOB />
             </ProtectedRoute>
           } />
 
           {/* Protected - Admin */}
-          <Route path="/admin" element={
+          <Route path="/dashboard/admin" element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
             </ProtectedRoute>
           } />
 
+          {/* 404 */}
           <Route path="*" element={<h1 className="text-center mt-20 font-bold">Halaman Tidak Ditemukan! (404)</h1>} />
         </Routes>
       </AuthProvider>

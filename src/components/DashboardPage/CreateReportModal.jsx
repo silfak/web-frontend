@@ -1,14 +1,118 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Upload, Send, FileText } from "lucide-react";
 
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
+
 export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
-  // STATE MENAMPUNG FILE
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [gedung, setGedung] = useState("Gedung Dewi Sartika");
-  const [ruangan, setRuangan] = useState("Lantai 1");
-  const [jenisMasalah, setJenisMasalah] = useState("Pemborosan AC");
+  const { user } = useAuth(); // Ambil data user login
+
+  // --- STATE DATA MASTER DARI BE ---
+  const [buildings, setBuildings] = useState([]);
+  const [allRooms, setAllRooms] = useState([]);
+  const [filteredRooms, setFilteredRooms] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // --- STATE PILIHAN FORM USER ---
+  const [selectedBuilding, setSelectedBuilding] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
-  const fileInputRef = useRef(null); 
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // 2. INTEGRASI: Ambil data Gedung & Kategori 
+  useEffect(() => {
+    if (isOpen) {
+      // Get All Buildings
+      api.get("/api/buildings")
+        .then(res => setBuildings(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data gedung:", err));
+
+      // Get All Rooms (Akan difilter di sisi client)
+      api.get("/api/rooms")
+        .then(res => setAllRooms(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data ruangan:", err));
+
+      // Get All Categories
+      api.get("/api/categories")
+        .then(res => setCategories(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data kategori:", err));
+    }
+  }, [isOpen]);
+
+  // 3. INTEGRASI: Filter Ruangan secara otomatis setiap user memilih 
+  useEffect(() => {
+    if (selectedBuilding) {
+      // Saring ruangan yang objek building.id-nya cocok dengan gedung pilihan user
+      const filtered = allRooms.filter(room => room.building?.id === selectedBuilding);
+      setFilteredRooms(filtered);
+    } else {
+      setFilteredRooms([]);
+    }
+    setSelectedRoom(""); // Reset pilihan ruangan jika gedung diganti
+  }, [selectedBuilding, allRooms]);
+
+  // Cleanup memori preview foto
+  useEffect(() => {
+    return () => {
+      if (selectedFile?.preview) {
+        URL.revokeObjectURL(selectedFile.preview);
+      }
+    };
+  }, [selectedFile]);
+
+  if (!isOpen) return null;
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File terlalu besar! Maksimal 5MB.");
+        return;
+      }
+      const fileData = {
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+        preview: URL.createObjectURL(file),
+      };
+      setSelectedFile(fileData);
+    }
+  };
+
+  // 4. INTEGRASI: Sesuaikan payload data agar klop dengan format POST Backend
+  const handleKirimClick = () => {
+    if (!selectedRoom || !selectedCategory || !deskripsi) {
+      alert("Mohon lengkapi semua kolom laporan yang wajib!");
+      return;
+    }
+
+    // Cari nama kategori terpilih untuk dijadikan 'title' laporan sesuai spec BE
+    const activeCategory = categories.find(cat => cat.id === selectedCategory);
+
+    const newReportData = {
+      room_id: selectedRoom, // Berupa ID ruangan riil database
+      title: activeCategory ? activeCategory.name : "Kerusakan Fasilitas", 
+      description: deskripsi,
+      priority: "medium", // Default value (spec BE: high/medium/low)
+      reporter_id: user?.id, // Otomatis membaca ID Mahasiswa yang sedang login
+      
+      // Properti tambahan untuk manipulasi tampilan lokal UI tabel sebelum refresh
+      lokasiName: buildings.find(b => b.id === selectedBuilding)?.name,
+      ruangName: allRooms.find(r => r.id === selectedRoom)?.name,
+      foto: selectedFile ? selectedFile.preview : null
+    };
+    
+    onConfirmClick(newReportData);
+  };
+
+  const handleRemoveFile = (e) => {
+    e.stopPropagation();
+    if (selectedFile?.preview) URL.revokeObjectURL(selectedFile.preview);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Fungsi membersihkan memori preview saat modal ditutup atau foto dihapus
   useEffect(() => {
@@ -18,51 +122,6 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
       }
     };
   }, [selectedFile]);
-
-  if (!isOpen) return null; // Modal tidak akan muncul jika isOpen false
-
-  // HANDLER PILIH FILE
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validasi ukuran (Max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File terlalu besar! Maksimal 5MB.");
-        return;
-      }
-
-      const fileData = {
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(1) + " MB", // Konversi ke MB
-        preview: URL.createObjectURL(file), // Buat URL sementara untuk preview
-      };
-      setSelectedFile(fileData);
-    }
-  };
-
-  // FUNGSI MENGIRIM DATA KE DASHBOARD
-  const handleKirimClick = () => {
-    const newReportData = {
-      id: `SFK-2026-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      tgl: "2 Mei 2026",
-      lokasi: gedung,
-      ruang: ruangan,
-      masalah: jenisMasalah,
-      deskripsi: deskripsi,
-      status: "Reported",
-      foto: selectedFile ? selectedFile.preview : null
-    };
-    
-    // Kirim objek data ini ke Dashboard
-    onConfirmClick(newReportData);
-  };
-
-  const handleRemoveFile = (e) => {
-    e.stopPropagation(); // Agar tidak memicu click pada div parent
-    if (selectedFile?.preview) URL.revokeObjectURL(selectedFile.preview);
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
@@ -86,24 +145,26 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
               <div>
                 <label className="block text-gray-600 font-bold mb-2">Pilih Gedung</label>
                 <select 
-                value={gedung} 
-                onChange={(e) => setGedung(e.target.value)}
+                value={selectedBuilding} 
+                onChange={(e) => setSelectedBuilding(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none appearance-none bg-no-repeat bg-position-[right_1rem_center]">
-                  <option>Pilih Gedung Kampus</option>
-                  <option>Gedung Dewi Sartika</option>
-                  <option>Gedung Ki Hajar Dewantara</option>
+                  <option value="">Pilih Gedung Kampus</option>
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-gray-600 font-bold mb-2">Pilih Ruangan/Lantai</label>
                 <select
-                value={ruangan} 
-                onChange={(e) => setRuangan(e.target.value)} 
+                value={selectedRoom} 
+                onChange={(e) => setSelectedRoom(e.target.value)}
+                disabled={!selectedBuilding}
                 className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
-                  <option>Pilih Ruangan/Lantai</option>
-                  <option>Lantai 1</option>
-                  <option>Lantai 2</option>
-                  <option>Lantai 3</option>
+                  <option value="">Pilih Ruangan/Lantai</option>
+                  {filteredRooms.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name} (Lantai {r.floor})</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -115,13 +176,13 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
             <div>
               <label className="block text-gray-600 font-bold mb-2">Jenis Masalah</label>
               <select
-              value={jenisMasalah} 
-              onChange={(e) => setJenisMasalah(e.target.value)}
+              value={selectedCategory} 
+              onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
-                <option>Tentukan Jenis Masalah</option>
-                <option>Pemborosan AC</option>
-                <option>Toilet Rusak</option>
-                <option>Lampu Padam</option>
+                <option value="">Tentukan Jenis Masalah</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div>
