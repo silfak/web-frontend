@@ -11,26 +11,29 @@ const Hero = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
-    let newErrors = {};
+    let newErrors: Record<string, string> = {};
     if (!formData.email) newErrors.email = "Email tidak boleh kosong!";
     if (!formData.password) newErrors.password = "Password tidak boleh kosong!";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -45,7 +48,7 @@ const Hero = () => {
       else if (role === "ob") navigate("/dashboard/ob");
       else navigate("/dashboard/mahasiswa");
 
-    } catch (err) {
+    } catch (err: any) {
       setApiError(err.response?.data?.message || "Email atau password salah!");
     } finally {
       setLoading(false);
@@ -138,44 +141,6 @@ const Hero = () => {
             Sign Up
           </Link>
         </p>
-
-        {/* ===== DEV ONLY — Bypass Auth ===== */}
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-400 font-bold mb-3 uppercase tracking-wider">Dev Shortcuts (No Backend)</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'user={"id":1,"role":"mahasiswa"}; path=/';
-                window.location.href = '/dashboard';
-              }}
-              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
-            >
-              Mahasiswa
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'user={"id":1,"role":"ob"}; path=/';
-                window.location.href = '/dashboard';
-              }}
-              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
-            >
-              OB
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'user={"id":1,"role":"admin"}; path=/';
-                window.location.href = '/dashboard';
-              }}
-              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-bold rounded-lg transition-colors"
-            >
-              Admin
-            </button>
-          </div>
-        </div>
-        {/* ===== END DEV ONLY ===== */}
       </div>
     </section>
   );

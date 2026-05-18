@@ -26,16 +26,16 @@ const Hero = () => {
     passwordConfirmation: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
-    let newErrors = {};
+    let newErrors: Record<string, string> = {};
     if (!formData.name) newErrors.name = "Nama tidak boleh kosong!";
     if (!formData.email) {
       newErrors.email = "Email tidak boleh kosong!";
@@ -55,7 +55,7 @@ const Hero = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -66,7 +66,7 @@ const Hero = () => {
       await register(formData);
       showToast("Registrasi berhasil! Silakan login.", "success");
       setTimeout(() => navigate("/login"), 1500);
-    } catch (err) {
+    } catch (err: any) {
       setApiError(err.response?.data?.message || "Registrasi gagal, coba lagi!");
     } finally {
       setLoading(false);

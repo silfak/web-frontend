@@ -8,19 +8,19 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
   const { user } = useAuth(); // Ambil data user login
 
   // --- STATE DATA MASTER DARI BE ---
-  const [buildings, setBuildings] = useState([]);
-  const [allRooms, setAllRooms] = useState([]);
-  const [filteredRooms, setFilteredRooms] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [buildings, setBuildings] = useState<any[]>([]);
+  const [allRooms, setAllRooms] = useState<any[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   // --- STATE PILIHAN FORM USER ---
-  const [selectedBuilding, setSelectedBuilding] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [deskripsi, setDeskripsi] = useState("");
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("");
+  const [selectedRoom, setSelectedRoom] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [deskripsi, setDeskripsi] = useState<string>("");
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 2. INTEGRASI: Ambil data Gedung & Kategori 
   useEffect(() => {
@@ -83,10 +83,6 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
 
   // 4. INTEGRASI: Sesuaikan payload data agar klop dengan format POST Backend
   const handleKirimClick = () => {
-    if (!selectedRoom || !selectedCategory || !deskripsi) {
-      alert("Mohon lengkapi semua kolom laporan yang wajib!");
-      return;
-    }
 
     // Cari nama kategori terpilih untuk dijadikan 'title' laporan sesuai spec BE
     const activeCategory = categories.find(cat => cat.id === selectedCategory);
@@ -114,14 +110,6 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Fungsi membersihkan memori preview saat modal ditutup atau foto dihapus
-  useEffect(() => {
-    return () => {
-      if (selectedFile?.preview) {
-        URL.revokeObjectURL(selectedFile.preview);
-      }
-    };
-  }, [selectedFile]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
@@ -188,7 +176,7 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
             <div>
               <label className="block text-gray-600 font-bold mb-2">Deskripsi Masalah</label>
               <textarea 
-                rows="4" 
+                rows={4}
                 placeholder="Jelaskan Masalah yang ditemukan"
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}

@@ -2,7 +2,7 @@ import React from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { StatusBadge } from "../StatusBadge";
 
-export default function DetailLaporanView({ report, onBack }) {
+export default function DetailLaporanView({ report, onBack }: { report: any; onBack: () => void }) {
   return (
     <div className="animate-in slide-in-from-bottom-4 duration-500 space-y-6">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-500 font-bold text-sm hover:text-[#107C41]">
@@ -15,7 +15,7 @@ export default function DetailLaporanView({ report, onBack }) {
           <div className="flex justify-between items-start mb-6">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>
-              <h3 className="text-2xl font-black text-gray-800">SFK-2026-001</h3>
+              <h3 className="text-2xl font-black text-gray-800">{report.id}</h3>
             </div>
             <StatusBadge status={report.status} />
           </div>
@@ -42,7 +42,7 @@ export default function DetailLaporanView({ report, onBack }) {
           <div className="py-6">
             <p className="font-bold text-gray-800 mb-2">Deskripsi</p>
             <div className="bg-gray-50 p-5 rounded-2xl text-xs text-gray-500 leading-relaxed italic border border-gray-100">
-              AC diruangan FIKLAB 201 Sering masih menyala ketika sore hari , dan tiap hari kamis
+              {report.deskripsi || "Tidak ada deskripsi"}
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@ export default function DetailLaporanView({ report, onBack }) {
           <h4 className="font-bold text-gray-800 mb-4">Foto Bukti</h4>
           <div className="rounded-2xl overflow-hidden shadow-inner bg-gray-100">
             <img 
-              src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=2070&auto=format&fit=crop" 
+              src={report.foto || "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=2070&auto=format&fit=crop"} 
               alt="Bukti" 
               className="w-full h-auto object-cover"
             />

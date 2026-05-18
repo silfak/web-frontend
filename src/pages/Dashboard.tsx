@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
-import Sidebar from "@/components/DashboardPage/sidebar";
-import Header from "@/components/DashboardPage/header";
+import Sidebar from "@/components/DashboardPage/Sidebar";
+import Header from "@/components/DashboardPage/Header";
 import Footer from "@/components/DashboardPage/Footer";
 import { Send, LogOut } from "lucide-react";
 
@@ -17,21 +17,24 @@ import Toast from "@/components/DashboardOBPage/Toast";
 // INTEGRASI
 import api from "@/lib/axios";
 import { useAuth } from "@/context/AuthContext";
+import type { Report } from "@/types";
+
+type ToastMessage = string | { title: string; desc: string } | "";
 
 // Wrapper detail laporan mahasiswa
-function DetailLaporanMahasiswaWrapper({ reports }) {
-  const { id } = useParams();
+function DetailLaporanMahasiswaWrapper({ reports }: { reports: Report[] }) {
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const report = location.state?.report ?? reports.find((r) => String(r.id) === id);
+  const report = (location.state as any)?.report ?? reports.find((r) => String(r.id) === id);
 
-  if (!report) return <Navigate to="/laporan" replace />;
+  if (!report) return <Navigate to="/sfk" replace />;
 
   return (
     <DetailLaporanView 
       report={report} 
-      onBack={() => navigate("/laporan")} 
+      onBack={() => navigate("/sfk")} 
     />
   );
 }
@@ -45,11 +48,11 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "" });
-  const [reports, setReports] = useState([]);
-  const [pendingReport, setPendingReport] = useState(null);
+  const [toast, setToast] = useState<{ show: boolean; message: ToastMessage }>({ show: false, message: "" });
+  const [reports, setReports] = useState<Report[]>([]);
+  const [pendingReport, setPendingReport] = useState<any>(null);
 
-  const mapBackendReports = (backendData) => {
+  const mapBackendReports = (backendData: any[]): Report[] => {
     return backendData.map((item) => ({
       id: item.id,
       tgl: item.created_at 
@@ -91,30 +94,32 @@ export default function Dashboard() {
     if (!pendingReport) return;
 
     try {
-      const payload = {
-        room_id: pendingReport.room_id,
-        title: pendingReport.title,
-        description: pendingReport.description,
-        priority: pendingReport.priority,
-        reporter_id: pendingReport.reporter_id
+      // Simulasi menambahkan data ke state lokal seperti Dashboard OB
+      const newReport = {
+        id: "SFK-" + Date.now(),
+        tgl: "Baru saja",
+        lokasi: pendingReport.lokasiName || "Tidak Diketahui",
+        ruang: pendingReport.ruangName || "Tidak Diketahui",
+        masalah: pendingReport.title || "Masalah Fasilitas",
+        deskripsi: pendingReport.description || "",
+        status: "Reported" as const,
       };
 
-      // Tembak data ke database
-      await api.post("/api/reports", payload);
-      await fetchReportsData();
+      setReports((prev) => [newReport, ...prev]);
 
+      setIsModalOpen(false);
       setIsConfirmSubmitOpen(false);
       setPendingReport(null);
       setToast({
         show: true,
         message: {
           title: "Laporan Berhasil Dikirim",
-          desc: "Laporan fasilitas kamu sudah tercatat di sistem database kampus."
+          desc: "Laporan kamu sudah masuk dan akan segera ditangani",
         }
       });
     } catch (err) {
-      console.error("Gagal mengirim laporan baru ke backend:", err);
-      alert("Terjadi kesalahan jaringan saat mengirim laporan.");
+      console.error("Gagal mensimulasikan pengiriman laporan:", err);
+      alert("Terjadi kesalahan saat mengirim laporan.");
     }
   };
 
@@ -128,9 +133,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleOpenConfirmation = (data) => {
+  const handleOpenConfirmation = (data: Report) => {
     setPendingReport(data); 
-    setIsModalOpen(false);
     setIsConfirmSubmitOpen(true); 
   };
 
