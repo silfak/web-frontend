@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
 import { Send, LogOut } from "lucide-react";
 import SidebarOB from "@/components/DashboardOBPage/SidebarOB";
@@ -12,6 +12,8 @@ import CreateReportModal from "@/components/DashboardOBPage/CreateReportModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import Toast from "@/components/DashboardOBPage/Toast";
 import type { Report, ReportStatus } from "@/types";
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
 
 type ToastMessage = string | { title: string; desc: string } | "";
 
@@ -56,7 +58,99 @@ export default function DashboardOB() {
     message: "",
   });
 
+  const { logout } = useAuth();
   const path = location.pathname;
+
+  const mapBackendStatus = (status: string): ReportStatus => {
+    if (status === "IN_PROGRESS") return "Inprogress";
+    if (status === "RESOLVED") return "Resolved";
+    return "Reported";
+  };
+
+  const mapFrontendStatus = (status: ReportStatus): string => {
+    if (status === "Inprogress") return "IN_PROGRESS";
+    if (status === "Resolved") return "RESOLVED";
+    return "REPORTED";
+  };
+
+  const mapBackendReports = (backendData: any[], roomsList: any[], categoriesList: any[]): Report[] => {
+    return backendData.map((item) => {
+      // Coba ekstrak lokasi & masalah asli yang dipilih user jika di-embed di deskripsi
+      let gedungName = "Gedung Dewi Sartika";
+      let ruangName = "Lantai 1";
+      let masalahName = "Masalah Fasilitas";
+      
+      const locAndProblemMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\s*\|\s*Masalah:\s*(.*?)\]/);
+      if (locAndProblemMatch) {
+        gedungName = locAndProblemMatch[1];
+        ruangName = locAndProblemMatch[2];
+        masalahName = locAndProblemMatch[3];
+      } else {
+        const locMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\]/);
+        if (locMatch) {
+          gedungName = locMatch[1];
+          ruangName = locMatch[2];
+        } else {
+          // Fallback ke pemetaan room di database
+          const room = roomsList.find(r => r.id === item.roomId);
+          if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
+            gedungName = "Gedung Ki Hajar Dewantara";
+          }
+          if (room) {
+            ruangName = `Lantai ${room.floor}`;
+          }
+        }
+        const category = categoriesList.find(c => c.id === item.categoryId);
+        masalahName = category?.name || item.title || "Masalah Fasilitas";
+      }
+
+      const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+
+      return {
+        id: item.id,
+        tgl: item.createdAt 
+          ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
+          : "Baru saja",
+        lokasi: gedungName,
+        ruang: ruangName,
+        masalah: masalahName,
+        deskripsi: cleanDescription,
+        status: mapBackendStatus(item.status),
+        catatan: item.note || "",
+      };
+    });
+  };
+
+  const fetchReportsData = async () => {
+    try {
+      const [reportsRes, roomsRes, categoriesRes] = await Promise.all([
+        api.get("/api/reports"),
+        api.get("/api/rooms"),
+        api.get("/api/categories")
+      ]);
+      setReports(mapBackendReports(
+        reportsRes.data.data || [],
+        roomsRes.data.data || [],
+        categoriesRes.data.data || []
+      ));
+    } catch (err) {
+      console.error("Gagal menarik data laporan:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportsData();
+  }, []);
+
+  const executeLogout = async () => {
+    try {
+      if (logout) await logout();
+      navigate("/login");
+    } catch (err) {
+      console.error("Gagal logout:", err);
+      navigate("/login");
+    }
+  };
 
   const getTitle = (): string => {
     if (path === "/profile") return "Profile";
@@ -68,21 +162,28 @@ export default function DashboardOB() {
     navigate(`/laporan/${report.id}`, { state: { report } });
   };
 
-  const handleUpdateStatus = (
+  const handleUpdateStatus = async (
     idLaporan: string | undefined,
     statusBaru: ReportStatus,
     catatanBaru: string
   ) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === idLaporan ? { ...r, status: statusBaru, catatan: catatanBaru } : r
-      )
-    );
-    const statusLabel = statusBaru === "Inprogress" ? "In Progress" : statusBaru;
-    setToast({
-      show: true,
-      message: `Status laporan berhasil diperbarui menjadi ${statusLabel}`,
-    });
+    try {
+      await api.patch(`/api/reports/${idLaporan}`, {
+        status: mapFrontendStatus(statusBaru),
+        note: catatanBaru,
+      });
+
+      await fetchReportsData();
+
+      const statusLabel = statusBaru === "Inprogress" ? "In Progress" : statusBaru;
+      setToast({
+        show: true,
+        message: `Status laporan berhasil diperbarui menjadi ${statusLabel}`,
+      });
+    } catch (err) {
+      console.error("Gagal memperbarui status laporan:", err);
+      alert("Gagal memperbarui status laporan.");
+    }
   };
 
   const handleOpenConfirmation = (data: Report) => {
@@ -177,7 +278,7 @@ export default function DashboardOB() {
       <ConfirmationModal
         isOpen={isConfirmLogoutOpen}
         onClose={() => setIsConfirmLogoutOpen(false)}
-        onConfirm={() => navigate("/")}
+        onConfirm={executeLogout}
         title="Keluar dari Sistem?"
         description="Kamu akan keluar dari sistem. Pastikan semua pekerjaanmu sudah tersimpan."
         confirmText="Ya, Keluar"

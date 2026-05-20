@@ -7,6 +7,7 @@ import type { ElementType } from "react";
 // ----- REPORT (OB) -----
 export interface Report {
   id?: string;
+  friendlyId?: string;
   tgl?: string;
   lokasi?: string;
   ruang?: string;

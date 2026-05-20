@@ -17,7 +17,7 @@ import Toast from "@/components/DashboardOBPage/Toast";
 // INTEGRASI
 import api from "@/lib/axios";
 import { useAuth } from "@/context/AuthContext";
-import type { Report } from "@/types";
+import type { Report, ReportStatus } from "@/types";
 
 type ToastMessage = string | { title: string; desc: string } | "";
 
@@ -29,12 +29,12 @@ function DetailLaporanMahasiswaWrapper({ reports }: { reports: Report[] }) {
 
   const report = (location.state as any)?.report ?? reports.find((r) => String(r.id) === id);
 
-  if (!report) return <Navigate to="/sfk" replace />;
+  if (!report) return <Navigate to="/laporan" replace />;
 
   return (
-    <DetailLaporanView 
-      report={report} 
-      onBack={() => navigate("/sfk")} 
+    <DetailLaporanView
+      report={report}
+      onBack={() => navigate("/laporan")}
     />
   );
 }
@@ -52,24 +52,71 @@ export default function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [pendingReport, setPendingReport] = useState<any>(null);
 
-  const mapBackendReports = (backendData: any[]): Report[] => {
-    return backendData.map((item) => ({
-      id: item.id,
-      tgl: item.created_at 
-        ? new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
-        : "Baru saja",
-      lokasi: item.room?.building?.name || "Tidak Diketahui",
-      ruang: item.room ? `${item.room.name} (Lantai ${item.room.floor})` : "Tidak Diketahui",
-      masalah: item.category?.name || item.title || "Masalah Fasilitas",
-      deskripsi: item.description || "",
-      status: item.status || "Reported",
-    }));
+  const mapBackendStatus = (status: string): ReportStatus => {
+    if (status === "IN_PROGRESS") return "Inprogress";
+    if (status === "RESOLVED") return "Resolved";
+    return "Reported";
+  };
+
+  const mapBackendReports = (backendData: any[], roomsList: any[], categoriesList: any[]): Report[] => {
+    return backendData.map((item) => {
+      // Coba ekstrak lokasi & masalah asli yang dipilih user jika di-embed di deskripsi
+      let gedungName = "Gedung Dewi Sartika";
+      let ruangName = "Lantai 1";
+      let masalahName = "Kerusakan Fasilitas";
+
+      const locAndProblemMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\s*\|\s*Masalah:\s*(.*?)\]/);
+      if (locAndProblemMatch) {
+        gedungName = locAndProblemMatch[1];
+        ruangName = locAndProblemMatch[2];
+        masalahName = locAndProblemMatch[3];
+      } else {
+        const locMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\]/);
+        if (locMatch) {
+          gedungName = locMatch[1];
+          ruangName = locMatch[2];
+        } else {
+          // Fallback ke pemetaan room di database
+          const room = roomsList.find(r => r.id === item.roomId);
+          if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
+            gedungName = "Gedung Ki Hajar Dewantara";
+          }
+          if (room) {
+            ruangName = `Lantai ${room.floor}`;
+          }
+        }
+        const category = categoriesList.find(c => c.id === item.categoryId);
+        masalahName = category?.name || item.title || "Kerusakan Fasilitas";
+      }
+
+      const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+
+      return {
+        id: item.id,
+        tgl: item.createdAt
+          ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
+          : "Baru saja",
+        lokasi: gedungName,
+        ruang: ruangName,
+        masalah: masalahName,
+        deskripsi: cleanDescription,
+        status: mapBackendStatus(item.status),
+      };
+    });
   };
 
   const fetchReportsData = async () => {
     try {
-      const res = await api.get("/api/reports");
-      const mappedData = mapBackendReports(res.data.data || []);
+      const [reportsRes, roomsRes, categoriesRes] = await Promise.all([
+        api.get("/api/reports"),
+        api.get("/api/rooms"),
+        api.get("/api/categories")
+      ]);
+      const mappedData = mapBackendReports(
+        reportsRes.data.data || [],
+        roomsRes.data.data || [],
+        categoriesRes.data.data || []
+      );
       setReports(mappedData);
     } catch (err) {
       console.error("Gagal menarik riwayat laporan dari database:", err);
@@ -89,23 +136,21 @@ export default function Dashboard() {
   const showDetail = (report) => {
     navigate(`/laporan/${report.id}`, { state: { report } });
   };
- 
+
   const handleActualSubmit = async () => {
     if (!pendingReport) return;
 
     try {
-      // Simulasi menambahkan data ke state lokal seperti Dashboard OB
-      const newReport = {
-        id: "SFK-" + Date.now(),
-        tgl: "Baru saja",
-        lokasi: pendingReport.lokasiName || "Tidak Diketahui",
-        ruang: pendingReport.ruangName || "Tidak Diketahui",
-        masalah: pendingReport.title || "Masalah Fasilitas",
-        deskripsi: pendingReport.description || "",
-        status: "Reported" as const,
-      };
+      // Kirim data laporan ke backend dengan camelCase field sesuai spec BE
+      await api.post("/api/reports", {
+        roomId: pendingReport.roomId,
+        reporterId: pendingReport.reporterId,
+        categoryId: pendingReport.categoryId,
+        description: pendingReport.description,
+      });
 
-      setReports((prev) => [newReport, ...prev]);
+      // Ambil data terbaru dari backend
+      await fetchReportsData();
 
       setIsModalOpen(false);
       setIsConfirmSubmitOpen(false);
@@ -117,9 +162,14 @@ export default function Dashboard() {
           desc: "Laporan kamu sudah masuk dan akan segera ditangani",
         }
       });
-    } catch (err) {
-      console.error("Gagal mensimulasikan pengiriman laporan:", err);
-      alert("Terjadi kesalahan saat mengirim laporan.");
+    } catch (err: any) {
+      console.error("Gagal mengirim laporan ke backend:", err);
+      if (err.response?.data) {
+        console.error("Detail error dari server:", err.response.data);
+        alert(`Gagal mengirim laporan: ${JSON.stringify(err.response.data.errors || err.response.data.message)}`);
+      } else {
+        alert("Terjadi kesalahan saat mengirim laporan.");
+      }
     }
   };
 
@@ -134,8 +184,8 @@ export default function Dashboard() {
   };
 
   const handleOpenConfirmation = (data: Report) => {
-    setPendingReport(data); 
-    setIsConfirmSubmitOpen(true); 
+    setPendingReport(data);
+    setIsConfirmSubmitOpen(true);
   };
 
   const renderContent = () => {
@@ -144,42 +194,42 @@ export default function Dashboard() {
     }
     if (path === "/laporan") {
       return (
-        <LaporanView 
-          reports={reports} 
+        <LaporanView
+          reports={reports}
           onOpenModal={() => setIsModalOpen(true)}
-          onViewDetail={showDetail} 
+          onViewDetail={showDetail}
         />
       );
     }
     if (path === "/profile") {
       return (
-        <ProfileView 
-          user={user} 
-          onShowToast={(msg) => setToast({ show: true, message: msg })} 
+        <ProfileView
+          user={user}
+          onShowToast={(msg) => setToast({ show: true, message: msg })}
         />
       );
     }
     return (
-      <BerandaView 
-        reports={reports} 
-        onOpenModal={() => setIsModalOpen(true)} 
-        onViewDetail={showDetail} 
+      <BerandaView
+        reports={reports}
+        onOpenModal={() => setIsModalOpen(true)}
+        onViewDetail={showDetail}
       />
     );
   };
 
   return (
     <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
-      <Sidebar 
+      <Sidebar
         user={user}
-        onLogoutClick={() => setIsConfirmLogoutOpen(true)} 
+        onLogoutClick={() => setIsConfirmLogoutOpen(true)}
       />
 
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="p-10 flex-1">
-          <Header 
-            title={getTitle()} 
-            onProfileClick={() => navigate("/profile")} 
+          <Header
+            title={getTitle()}
+            onProfileClick={() => navigate("/profile")}
             onViewDetail={showDetail}
             reports={reports}
           />
@@ -190,13 +240,13 @@ export default function Dashboard() {
         <Footer />
       </div>
 
-      <CreateReportModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onConfirmClick={handleOpenConfirmation} 
+      <CreateReportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirmClick={handleOpenConfirmation}
       />
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isConfirmSubmitOpen}
         onClose={() => setIsConfirmSubmitOpen(false)}
         onConfirm={handleActualSubmit}
@@ -208,7 +258,7 @@ export default function Dashboard() {
         variant="green"
       />
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isConfirmLogoutOpen}
         onClose={() => setIsConfirmLogoutOpen(false)}
         onConfirm={executeLogout}
@@ -218,12 +268,12 @@ export default function Dashboard() {
         cancelText="Batal"
         icon={LogOut}
         variant="red"
-      /> 
+      />
 
-      <Toast 
-        isOpen={toast.show} 
-        message={toast.message} 
-        onClose={() => setToast({ show: false, message: "" })} 
+      <Toast
+        isOpen={toast.show}
+        message={toast.message}
+        onClose={() => setToast({ show: false, message: "" })}
       />
     </div>
   );

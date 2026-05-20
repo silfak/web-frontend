@@ -81,36 +81,80 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
     }
   };
 
+  // Helper to map UI selected static floor to real room UUID from backend
+  const getMappedRoomId = (floorName: string) => {
+    if (!floorName) return "";
+    const floorNum = parseInt(floorName.replace("Lantai ", ""));
+    // Search the fetched allRooms list for a matching floor number
+    const matchedRoom = allRooms.find(r => r.floor === floorNum);
+    if (matchedRoom) return matchedRoom.id;
+    // Fallback to the first available room if no match is found
+    if (allRooms.length > 0) return allRooms[0].id;
+    return "";
+  };
+ 
+  // Daftar Jenis Masalah Statis sesuai dashboard OB
+  const listJenisMasalah = [
+    { label: "Pemborosan AC", categoryName: "AC rusak" },
+    { label: "Toilet Rusak", categoryName: "Kotoran" },
+    { label: "Lampu Padam", categoryName: "Kotoran" },
+    { label: "Kotoran/Kebersihan", categoryName: "Kotoran" },
+  ];
+
+  const getMappedCategoryId = (masalahLabel: string) => {
+    const item = listJenisMasalah.find(x => x.label === masalahLabel);
+    if (!item) return "";
+    const matchedCat = categories.find(c => c.name === item.categoryName);
+    return matchedCat ? matchedCat.id : "";
+  };
+
   // 4. INTEGRASI: Sesuaikan payload data agar klop dengan format POST Backend
   const handleKirimClick = () => {
+    if (!selectedBuilding) {
+      alert("Pilih gedung kampus terlebih dahulu.");
+      return;
+    }
+    if (!selectedRoom) {
+      alert("Pilih ruangan/lantai terlebih dahulu.");
+      return;
+    }
+    if (!selectedCategory) {
+      alert("Pilih jenis masalah terlebih dahulu.");
+      return;
+    }
+    if (!deskripsi.trim()) {
+      alert("Masukkan deskripsi masalah terlebih dahulu.");
+      return;
+    }
 
-    // Cari nama kategori terpilih untuk dijadikan 'title' laporan sesuai spec BE
-    const activeCategory = categories.find(cat => cat.id === selectedCategory);
+    const categoryId = getMappedCategoryId(selectedCategory);
+    const originalLocationTag = `[Lokasi: ${selectedBuilding} - ${selectedRoom} | Masalah: ${selectedCategory}]`;
 
     const newReportData = {
-      room_id: selectedRoom, // Berupa ID ruangan riil database
-      title: activeCategory ? activeCategory.name : "Kerusakan Fasilitas", 
-      description: deskripsi,
-      priority: "medium", // Default value (spec BE: high/medium/low)
-      reporter_id: user?.id, // Otomatis membaca ID Mahasiswa yang sedang login
+      roomId: getMappedRoomId(selectedRoom), // Mapped to UUID
+      reporterId: user?.id,
+      categoryId: categoryId,
+      description: `${deskripsi.trim()} ${originalLocationTag}`,
+      title: selectedCategory, 
+      priority: "medium",
       
       // Properti tambahan untuk manipulasi tampilan lokal UI tabel sebelum refresh
-      lokasiName: buildings.find(b => b.id === selectedBuilding)?.name,
-      ruangName: allRooms.find(r => r.id === selectedRoom)?.name,
+      lokasiName: selectedBuilding,
+      ruangName: selectedRoom, // "Lantai 1", "Lantai 2", etc.
       foto: selectedFile ? selectedFile.preview : null
     };
     
     onConfirmClick(newReportData);
   };
-
+ 
   const handleRemoveFile = (e) => {
     e.stopPropagation();
     if (selectedFile?.preview) URL.revokeObjectURL(selectedFile.preview);
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-
+ 
+ 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
@@ -122,7 +166,7 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
             <X size={24} />
           </button>
         </div>
-
+ 
         {/* Form Content */}
         <div className="p-8 space-y-8 max-h-[80vh] overflow-y-auto text-sm">
           
@@ -135,11 +179,10 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
                 <select 
                 value={selectedBuilding} 
                 onChange={(e) => setSelectedBuilding(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none appearance-none bg-no-repeat bg-position-[right_1rem_center]">
+                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
                   <option value="">Pilih Gedung Kampus</option>
-                  {buildings.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
+                  <option value="Gedung Dewi Sartika">Gedung Dewi Sartika</option>
+                  <option value="Gedung Ki Hajar Dewantara">Gedung Ki Hajar Dewantara</option>
                 </select>
               </div>
               <div>
@@ -147,17 +190,16 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
                 <select
                 value={selectedRoom} 
                 onChange={(e) => setSelectedRoom(e.target.value)}
-                disabled={!selectedBuilding}
                 className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
                   <option value="">Pilih Ruangan/Lantai</option>
-                  {filteredRooms.map((r) => (
-                    <option key={r.id} value={r.id}>{r.name} (Lantai {r.floor})</option>
-                  ))}
+                  <option value="Lantai 1">Lantai 1</option>
+                  <option value="Lantai 2">Lantai 2</option>
+                  <option value="Lantai 3">Lantai 3</option>
                 </select>
               </div>
             </div>
           </div>
-
+ 
           {/* Section 2: Detail Masalah */}
           <div className="space-y-4">
             <h4 className="font-bold text-[#107C41] border-l-4 border-[#107C41] pl-3 uppercase tracking-widest text-xs">Detail Masalah</h4>
@@ -168,9 +210,10 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
                 <option value="">Tentukan Jenis Masalah</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                <option value="Pemborosan AC">Pemborosan AC</option>
+                <option value="Toilet Rusak">Toilet Rusak</option>
+                <option value="Lampu Padam">Lampu Padam</option>
+                <option value="Kotoran/Kebersihan">Kotoran/Kebersihan</option>
               </select>
             </div>
             <div>
