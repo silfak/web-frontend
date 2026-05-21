@@ -65,50 +65,27 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: any) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         alert("File terlalu besar! Maksimal 5MB.");
         return;
       }
-      const fileData = {
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
-        preview: URL.createObjectURL(file),
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const fileData = {
+          name: file.name,
+          size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+          preview: reader.result as string, // Base64 string
+        };
+        setSelectedFile(fileData);
       };
-      setSelectedFile(fileData);
+      reader.readAsDataURL(file);
     }
   };
 
-  // Helper to map UI selected static floor to real room UUID from backend
-  const getMappedRoomId = (floorName: string) => {
-    if (!floorName) return "";
-    const floorNum = parseInt(floorName.replace("Lantai ", ""));
-    // Search the fetched allRooms list for a matching floor number
-    const matchedRoom = allRooms.find(r => r.floor === floorNum);
-    if (matchedRoom) return matchedRoom.id;
-    // Fallback to the first available room if no match is found
-    if (allRooms.length > 0) return allRooms[0].id;
-    return "";
-  };
- 
-  // Daftar Jenis Masalah Statis sesuai dashboard OB
-  const listJenisMasalah = [
-    { label: "Pemborosan AC", categoryName: "AC rusak" },
-    { label: "Toilet Rusak", categoryName: "Kotoran" },
-    { label: "Lampu Padam", categoryName: "Kotoran" },
-    { label: "Kotoran/Kebersihan", categoryName: "Kotoran" },
-  ];
-
-  const getMappedCategoryId = (masalahLabel: string) => {
-    const item = listJenisMasalah.find(x => x.label === masalahLabel);
-    if (!item) return "";
-    const matchedCat = categories.find(c => c.name === item.categoryName);
-    return matchedCat ? matchedCat.id : "";
-  };
-
-  // 4. INTEGRASI: Sesuaikan payload data agar klop dengan format POST Backend
+  // INTEGRASI: Mengirim ID asli ke backend
   const handleKirimClick = () => {
     if (!selectedBuilding) {
       alert("Pilih gedung kampus terlebih dahulu.");
@@ -127,20 +104,22 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
       return;
     }
 
-    const categoryId = getMappedCategoryId(selectedCategory);
-    const originalLocationTag = `[Lokasi: ${selectedBuilding} - ${selectedRoom} | Masalah: ${selectedCategory}]`;
+    const buildingName = buildings.find(b => b.id === selectedBuilding)?.name || "Gedung Unknown";
+    const roomName = filteredRooms.find(r => r.id === selectedRoom)?.name || "Ruang Unknown";
+    const categoryName = categories.find(c => c.id === selectedCategory)?.name || "Kategori Unknown";
+
+    const originalLocationTag = `[Lokasi: ${buildingName} - ${roomName} | Masalah: ${categoryName}]`;
 
     const newReportData = {
-      roomId: getMappedRoomId(selectedRoom), // Mapped to UUID
-      reporterId: user?.id,
-      categoryId: categoryId,
+      roomId: selectedRoom, // Mapped to UUID
+      categoryId: selectedCategory, // Mapped to UUID
       description: `${deskripsi.trim()} ${originalLocationTag}`,
-      title: selectedCategory, 
+      title: categoryName, 
       priority: "medium",
       
       // Properti tambahan untuk manipulasi tampilan lokal UI tabel sebelum refresh
-      lokasiName: selectedBuilding,
-      ruangName: selectedRoom, // "Lantai 1", "Lantai 2", etc.
+      lokasiName: buildingName,
+      ruangName: roomName,
       foto: selectedFile ? selectedFile.preview : null
     };
     
@@ -181,8 +160,9 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
                 onChange={(e) => setSelectedBuilding(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
                   <option value="">Pilih Gedung Kampus</option>
-                  <option value="Gedung Dewi Sartika">Gedung Dewi Sartika</option>
-                  <option value="Gedung Ki Hajar Dewantara">Gedung Ki Hajar Dewantara</option>
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -190,11 +170,12 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
                 <select
                 value={selectedRoom} 
                 onChange={(e) => setSelectedRoom(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
+                disabled={!selectedBuilding}
+                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none disabled:bg-gray-100 disabled:text-gray-400">
                   <option value="">Pilih Ruangan/Lantai</option>
-                  <option value="Lantai 1">Lantai 1</option>
-                  <option value="Lantai 2">Lantai 2</option>
-                  <option value="Lantai 3">Lantai 3</option>
+                  {filteredRooms.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -210,10 +191,9 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
                 <option value="">Tentukan Jenis Masalah</option>
-                <option value="Pemborosan AC">Pemborosan AC</option>
-                <option value="Toilet Rusak">Toilet Rusak</option>
-                <option value="Lampu Padam">Lampu Padam</option>
-                <option value="Kotoran/Kebersihan">Kotoran/Kebersihan</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div>

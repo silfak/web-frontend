@@ -21,10 +21,63 @@ interface DashboardViewProps {
 
 export default function DashboardView({ laporanData = [] }: DashboardViewProps) {
   const [showToast, setShowToast] = useState(false);
+  const [filterBulan, setFilterBulan] = useState("Semua Bulan");
+  const [filterTahun, setFilterTahun] = useState("Semua Tahun");
 
   const triggerToast = () => {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const monthsList = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+  const handleExport = () => {
+    let filtered = laporanData;
+
+    if (filterTahun !== "Semua Tahun") {
+      filtered = filtered.filter(item => item.rawDate?.getFullYear().toString() === filterTahun);
+    }
+    
+    if (filterBulan !== "Semua Bulan") {
+      const monthIndex = monthsList.indexOf(filterBulan);
+      if (monthIndex !== -1) {
+        filtered = filtered.filter(item => item.rawDate?.getMonth() === monthIndex);
+      }
+    }
+
+    if (filtered.length === 0) {
+      alert("Tidak ada data laporan pada bulan dan tahun yang dipilih.");
+      return;
+    }
+
+    const headers = ["ID Laporan", "Pelapor", "Gedung", "Ruang", "Jenis Masalah", "Tanggal", "Jam", "Status", "Deskripsi"];
+    const csvContent = [
+      headers.join(","),
+      ...filtered.map(row => 
+        [
+          row.id,
+          `"${row.nama}"`,
+          `"${row.gedung}"`,
+          `"${row.ruang}"`,
+          `"${row.jenis}"`,
+          `"${row.tanggal}"`,
+          row.jam,
+          row.status,
+          `"${row.deskripsi?.replace(/"/g, '""') || ""}"`
+        ].join(",")
+      )
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Export_Laporan_${filterBulan}_${filterTahun}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    triggerToast();
   };
 
   const totalMasuk = laporanData.length;
@@ -140,17 +193,19 @@ export default function DashboardView({ laporanData = [] }: DashboardViewProps) 
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
-              {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((bulan) => (
-                <option key={bulan}>{bulan}</option>
+            <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
+              <option>Semua Bulan</option>
+              {monthsList.map((bulan) => (
+                <option key={bulan} value={bulan}>{bulan}</option>
               ))}
             </select>
-            <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
+            <select value={filterTahun} onChange={(e) => setFilterTahun(e.target.value)} className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto">
+              <option>Semua Tahun</option>
               {Array.from({ length: new Date().getFullYear() - 2023 }, (_, i) => 2024 + i).map((tahun) => (
-                <option key={tahun}>{tahun}</option>
+                <option key={tahun} value={tahun.toString()}>{tahun}</option>
               ))}
             </select>
-            <button onClick={triggerToast} className="bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm hover:bg-green-800 transition-all">
+            <button onClick={handleExport} className="bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm hover:bg-green-800 transition-all">
               <Download size={16} />Export Data
             </button>
           </div>

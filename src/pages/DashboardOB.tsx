@@ -8,7 +8,7 @@ import BerandaOB from "@/components/DashboardOBPage/Views/BerandaOB";
 import ProfileOB from "@/components/DashboardOBPage/Views/ProfileOB";
 import LaporanOB from "@/components/DashboardOBPage/Views/LaporanOB";
 import DetailLaporanOB from "@/components/DashboardOBPage/Views/DetailLaporanOB";
-import CreateReportModal from "@/components/DashboardOBPage/CreateReportModal";
+import CreateReportModal from "@/components/DashboardPage/CreateReportModal";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import Toast from "@/components/DashboardOBPage/Toast";
 import type { Report, ReportStatus } from "@/types";
@@ -22,7 +22,7 @@ function DetailLaporanOBWrapper({
   onUpdateStatus,
 }: {
   reports: Report[];
-  onUpdateStatus: (id: string | undefined, status: ReportStatus, catatan: string) => void;
+  onUpdateStatus: (id: string | undefined, status: ReportStatus, catatan: string, fotoBase64?: string | null) => void;
 }) {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -37,8 +37,8 @@ function DetailLaporanOBWrapper({
     <DetailLaporanOB
       report={report}
       onBack={() => navigate("/laporan")}
-      onUpdateStatus={(statusBaru, catatanBaru) =>
-        onUpdateStatus(report.id, statusBaru, catatanBaru)
+      onUpdateStatus={(statusBaru, catatanBaru, fotoBaru) =>
+        onUpdateStatus(report.id, statusBaru, catatanBaru, fotoBaru)
       }
     />
   );
@@ -91,25 +91,29 @@ export default function DashboardOB() {
           gedungName = locMatch[1];
           ruangName = locMatch[2];
         } else {
-          // Fallback ke pemetaan room di database
-          const room = roomsList.find(r => r.id === item.roomId);
+          const rId = item.roomId || item.room_id;
+          const room = roomsList.find(r => r.id === rId);
           if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
             gedungName = "Gedung Ki Hajar Dewantara";
           }
           if (room) {
             ruangName = `Lantai ${room.floor}`;
           }
+          const cId = item.categoryId || item.category_id;
+          const category = categoriesList.find(c => c.id === cId);
+          masalahName = category?.name || item.title || "Masalah Fasilitas";
         }
-        const category = categoriesList.find(c => c.id === item.categoryId);
-        masalahName = category?.name || item.title || "Masalah Fasilitas";
       }
 
       const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+      const createdAt = item.createdAt || item.created_at;
+      const fotoUrl = item.imageUrl || item.image_url;
 
       return {
         id: item.id,
-        tgl: item.createdAt 
-          ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
+        friendlyId: `SFK-${item.id?.substring(0, 6).toUpperCase()}`,
+        tgl: createdAt 
+          ? new Date(createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
           : "Baru saja",
         lokasi: gedungName,
         ruang: ruangName,
@@ -117,14 +121,17 @@ export default function DashboardOB() {
         deskripsi: cleanDescription,
         status: mapBackendStatus(item.status),
         catatan: item.note || "",
+        foto: fotoUrl || null,
+        rawDate: createdAt ? new Date(createdAt) : new Date(0),
       };
     });
   };
 
   const fetchReportsData = async () => {
     try {
+      const timestamp = new Date().getTime();
       const [reportsRes, roomsRes, categoriesRes] = await Promise.all([
-        api.get("/api/reports"),
+        api.get(`/api/reports?_t=${timestamp}`),
         api.get("/api/rooms"),
         api.get("/api/categories")
       ]);
@@ -165,13 +172,20 @@ export default function DashboardOB() {
   const handleUpdateStatus = async (
     idLaporan: string | undefined,
     statusBaru: ReportStatus,
-    catatanBaru: string
+    catatanBaru: string,
+    fotoBase64?: string | null
   ) => {
     try {
-      await api.patch(`/api/reports/${idLaporan}`, {
+      const res = await api.patch(`/api/reports/${idLaporan}`, {
         status: mapFrontendStatus(statusBaru),
         note: catatanBaru,
+        // Dihapus sementara untuk mencegah Vercel 500 Error
+        // imageUrl: fotoBase64 || undefined,
       });
+
+      if (res.data && res.data.success === false) {
+        throw new Error(res.data.message || JSON.stringify(res.data));
+      }
 
       await fetchReportsData();
 
@@ -191,19 +205,43 @@ export default function DashboardOB() {
     setIsConfirmSubmitOpen(true);
   };
 
-  const handleSimulateSubmit = () => {
-    if (pendingReport) {
-      setReports((prev) => [pendingReport, ...prev]);
+  const handleActualSubmit = async () => {
+    if (!pendingReport) return;
+    
+    try {
+      // Kirim data laporan ke backend
+      const res = await api.post("/api/reports", {
+        roomId: (pendingReport as any).roomId,
+        room_id: (pendingReport as any).roomId,
+        categoryId: (pendingReport as any).categoryId,
+        category_id: (pendingReport as any).categoryId,
+        description: (pendingReport as any).description,
+        title: (pendingReport as any).title,
+        priority: (pendingReport as any).priority || "medium",
+      });
+
+      if (res.data && res.data.success === false) {
+        throw new Error(res.data.message || JSON.stringify(res.data));
+      }
+
+      // Tarik ulang data asli dari database
+      await fetchReportsData();
+
+      setIsModalOpen(false);
+      setIsConfirmSubmitOpen(false);
       setPendingReport(null);
+      setToast({
+        show: true,
+        message: {
+          title: "Laporan Berhasil Dikirim",
+          desc: "Laporan kamu sudah masuk dan akan segera ditangani",
+        },
+      });
+    } catch (err: any) {
+      console.error("Gagal mengirim laporan:", err);
+      const serverMsg = err.response?.data?.message || JSON.stringify(err.response?.data) || err.message;
+      alert(`Terjadi kesalahan saat mengirim laporan ke server: ${serverMsg}`);
     }
-    setIsModalOpen(false);
-    setToast({
-      show: true,
-      message: {
-        title: "Laporan Berhasil Dikirim",
-        desc: "Laporan kamu sudah masuk dan akan segera ditangani",
-      },
-    });
   };
 
   const renderContent = () => {
@@ -266,7 +304,7 @@ export default function DashboardOB() {
       <ConfirmationModal
         isOpen={isConfirmSubmitOpen}
         onClose={() => setIsConfirmSubmitOpen(false)}
-        onConfirm={handleSimulateSubmit}
+        onConfirm={handleActualSubmit}
         title="Kirim Laporan Ini?"
         description="Pastikan semua data laporan sudah benar. Laporan yang sudah dikirim tidak dapat diubah."
         confirmText="Ya, Kirim"

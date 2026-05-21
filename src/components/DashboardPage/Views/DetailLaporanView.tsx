@@ -15,7 +15,7 @@ export default function DetailLaporanView({ report, onBack }: { report: any; onB
           <div className="flex justify-between items-start mb-6">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>
-              <h3 className="text-2xl font-black text-gray-800">{report.id}</h3>
+              <h3 className="text-2xl font-black text-gray-800">{report.friendlyId || report.id}</h3>
             </div>
             <StatusBadge status={report.status} />
           </div>

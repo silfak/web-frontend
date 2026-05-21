@@ -16,6 +16,7 @@ export interface Report {
   status: ReportStatus;
   foto?: string | null;
   catatan?: string;
+  rawDate?: Date;
 }
 
 export type ReportStatus = "Reported" | "Inprogress" | "Resolved";
@@ -23,6 +24,8 @@ export type ReportStatus = "Reported" | "Inprogress" | "Resolved";
 // ----- LAPORAN (ADMIN) -----
 export interface LaporanAdmin {
   id: string;
+  originalId?: string;
+  rawDate?: Date;
   nama: string;
   gedung: string;
   ruang: string;
@@ -47,23 +50,28 @@ export interface FiltersState {
 
 // ----- MANAJEMEN -----
 export interface GedungItem {
+  id?: string;
   nama: string;
   ruang: number | string;
   gedung?: string;
 }
 
 export interface RuanganItem {
+  id?: string;
   nama: string;
   gedung: string;
+  buildingId?: string;
 }
 
 export interface JenisMasalahItem {
+  id?: string;
   nama: string;
 }
 
-export type UserRole = "mahasiswa" | "ob" | "admin";
+export type UserRole = "mahasiswa" | "ob" | "admin" | "MAHASISWA" | "OB" | "ADMIN";
 
 export interface UserItem {
+  id?: string;
   nama: string;
   email: string;
   nim?: string;

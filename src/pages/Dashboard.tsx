@@ -76,39 +76,46 @@ export default function Dashboard() {
           gedungName = locMatch[1];
           ruangName = locMatch[2];
         } else {
-          // Fallback ke pemetaan room di database
-          const room = roomsList.find(r => r.id === item.roomId);
+          const rId = item.roomId || item.room_id;
+          const room = roomsList.find(r => r.id === rId);
           if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
             gedungName = "Gedung Ki Hajar Dewantara";
           }
           if (room) {
             ruangName = `Lantai ${room.floor}`;
           }
+          const cId = item.categoryId || item.category_id;
+          const category = categoriesList.find(c => c.id === cId);
+          masalahName = category?.name || item.title || "Kerusakan Fasilitas";
         }
-        const category = categoriesList.find(c => c.id === item.categoryId);
-        masalahName = category?.name || item.title || "Kerusakan Fasilitas";
       }
 
       const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+      const createdAt = item.createdAt || item.created_at;
+      const fotoUrl = item.imageUrl || item.image_url;
 
       return {
         id: item.id,
-        tgl: item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
+        friendlyId: `SFK-${item.id?.substring(0, 6).toUpperCase()}`,
+        tgl: createdAt
+          ? new Date(createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
           : "Baru saja",
         lokasi: gedungName,
         ruang: ruangName,
         masalah: masalahName,
         deskripsi: cleanDescription,
         status: mapBackendStatus(item.status),
+        foto: fotoUrl || null,
+        rawDate: createdAt ? new Date(createdAt) : new Date(0),
       };
     });
   };
 
   const fetchReportsData = async () => {
     try {
+      const timestamp = new Date().getTime();
       const [reportsRes, roomsRes, categoriesRes] = await Promise.all([
-        api.get("/api/reports"),
+        api.get(`/api/reports?_t=${timestamp}`),
         api.get("/api/rooms"),
         api.get("/api/categories")
       ]);
@@ -141,15 +148,22 @@ export default function Dashboard() {
     if (!pendingReport) return;
 
     try {
-      // Kirim data laporan ke backend dengan camelCase field sesuai spec BE
-      await api.post("/api/reports", {
+      // Kirim data laporan ke backend
+      const res = await api.post("/api/reports", {
         roomId: pendingReport.roomId,
-        reporterId: pendingReport.reporterId,
+        room_id: pendingReport.roomId,
         categoryId: pendingReport.categoryId,
+        category_id: pendingReport.categoryId,
         description: pendingReport.description,
+        title: pendingReport.title,
+        priority: pendingReport.priority || "medium",
       });
 
-      // Ambil data terbaru dari backend
+      if (res.data && res.data.success === false) {
+        throw new Error(res.data.message || JSON.stringify(res.data));
+      }
+
+      // Tarik ulang data asli dari database
       await fetchReportsData();
 
       setIsModalOpen(false);
@@ -164,12 +178,8 @@ export default function Dashboard() {
       });
     } catch (err: any) {
       console.error("Gagal mengirim laporan ke backend:", err);
-      if (err.response?.data) {
-        console.error("Detail error dari server:", err.response.data);
-        alert(`Gagal mengirim laporan: ${JSON.stringify(err.response.data.errors || err.response.data.message)}`);
-      } else {
-        alert("Terjadi kesalahan saat mengirim laporan.");
-      }
+      const serverMsg = err.response?.data?.message || JSON.stringify(err.response?.data) || err.message;
+      alert(`Terjadi kesalahan saat mengirim laporan ke server: ${serverMsg}`);
     }
   };
 

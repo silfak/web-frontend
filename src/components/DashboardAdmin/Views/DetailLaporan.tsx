@@ -15,12 +15,16 @@ interface StatusOption {
 interface DetailLaporanProps {
   laporan: LaporanAdmin;
   onKembali: () => void;
+  onUpdate?: () => void;
 }
 
-export default function DetailLaporan({ laporan, onKembali }: DetailLaporanProps) {
+import api from "@/lib/axios";
+
+export default function DetailLaporan({ laporan, onKembali, onUpdate }: DetailLaporanProps) {
   const { toasts, showToast, removeToast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<LaporanAdminStatus>(laporan?.status || "reported");
   const [catatan, setCatatan] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const statusOptions: StatusOption[] = [
     { value: "reported", label: "Reported", icon: <Flag size={14} />, className: "bg-blue-100 text-blue-600" },
@@ -30,9 +34,37 @@ export default function DetailLaporan({ laporan, onKembali }: DetailLaporanProps
 
   const currentStatus = statusOptions.find((s) => s.value === selectedStatus);
 
-  const handleSimpan = () => {
-    showToast("Status laporan berhasil disimpan");
-    setCatatan("");
+  const mapFrontendStatus = (s: LaporanAdminStatus) => {
+    if (s === "inprogress") return "IN_PROGRESS";
+    if (s === "resolved") return "RESOLVED";
+    return "REPORTED";
+  };
+
+  const handleSimpan = async () => {
+    if (!laporan.originalId) {
+      showToast("Gagal: ID Asli tidak ditemukan");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await api.patch(`/api/reports/${laporan.originalId}`, {
+        status: mapFrontendStatus(selectedStatus),
+        note: catatan,
+      });
+
+      if (res.data && res.data.success === false) {
+        throw new Error(res.data.message || "Gagal menyimpan status");
+      }
+
+      showToast("Status laporan berhasil disimpan");
+      setCatatan("");
+      if (onUpdate) onUpdate(); // Refresh the list
+    } catch (error: any) {
+      showToast(error.message || "Terjadi kesalahan sistem saat menyimpan");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -118,8 +150,8 @@ export default function DetailLaporan({ laporan, onKembali }: DetailLaporanProps
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
               />
             </div>
-            <button onClick={handleSimpan} className="w-full bg-green-700 text-white py-3 rounded-lg text-sm font-semibold hover:bg-green-800 transition flex items-center justify-center gap-2">
-              <Save size={16} />Simpan Status
+            <button onClick={handleSimpan} disabled={isLoading} className="w-full bg-green-700 text-white py-3 rounded-lg text-sm font-semibold hover:bg-green-800 transition flex items-center justify-center gap-2 disabled:opacity-50">
+              <Save size={16} />{isLoading ? "Menyimpan..." : "Simpan Status"}
             </button>
           </div>
         </div>
