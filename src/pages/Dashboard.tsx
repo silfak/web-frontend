@@ -78,11 +78,9 @@ export default function Dashboard() {
         } else {
           const rId = item.roomId || item.room_id;
           const room = roomsList.find(r => r.id === rId);
-          if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
-            gedungName = "Gedung Ki Hajar Dewantara";
-          }
           if (room) {
-            ruangName = `Lantai ${room.floor}`;
+            gedungName = room.building?.name || "Gedung Dewi Sartika";
+            ruangName = room.name || `Lantai ${room.floor}`;
           }
           const cId = item.categoryId || item.category_id;
           const category = categoriesList.find(c => c.id === cId);
@@ -150,13 +148,12 @@ export default function Dashboard() {
     try {
       // Kirim data laporan ke backend
       const res = await api.post("/api/reports", {
+        reporterId: user?.id,
         roomId: pendingReport.roomId,
-        room_id: pendingReport.roomId,
         categoryId: pendingReport.categoryId,
-        category_id: pendingReport.categoryId,
         description: pendingReport.description,
-        title: pendingReport.title,
-        priority: pendingReport.priority || "medium",
+        isUrgent: pendingReport.priority === "high",
+        imageUrl: pendingReport.foto || undefined,
       });
 
       if (res.data && res.data.success === false) {

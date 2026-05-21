@@ -58,7 +58,7 @@ export default function DashboardOB() {
     message: "",
   });
 
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const path = location.pathname;
 
   const mapBackendStatus = (status: string): ReportStatus => {
@@ -93,11 +93,9 @@ export default function DashboardOB() {
         } else {
           const rId = item.roomId || item.room_id;
           const room = roomsList.find(r => r.id === rId);
-          if (room?.building?.name === "Gedung B" || room?.building?.name === "Gedung C") {
-            gedungName = "Gedung Ki Hajar Dewantara";
-          }
           if (room) {
-            ruangName = `Lantai ${room.floor}`;
+            gedungName = room.building?.name || "Gedung Dewi Sartika";
+            ruangName = room.name || `Lantai ${room.floor}`;
           }
           const cId = item.categoryId || item.category_id;
           const category = categoriesList.find(c => c.id === cId);
@@ -211,13 +209,12 @@ export default function DashboardOB() {
     try {
       // Kirim data laporan ke backend
       const res = await api.post("/api/reports", {
+        reporterId: user?.id,
         roomId: (pendingReport as any).roomId,
-        room_id: (pendingReport as any).roomId,
         categoryId: (pendingReport as any).categoryId,
-        category_id: (pendingReport as any).categoryId,
         description: (pendingReport as any).description,
-        title: (pendingReport as any).title,
-        priority: (pendingReport as any).priority || "medium",
+        isUrgent: (pendingReport as any).priority === "high",
+        imageUrl: (pendingReport as any).foto || undefined,
       });
 
       if (res.data && res.data.success === false) {

@@ -1,30 +1,653 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Silfak API Reference",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "title": "SILFAK API",
+    "description": "API documentation generated from Zod schemas"
+  },
+  "servers": [
+    { "url": "https://silfak-api.vercel.app/api" }
+  ],
+  "components": {
+    "schemas": {
+      "RegisterInput": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "name": { "type": "string", "minLength": 3 },
+          "nim": { "type": "string", "minLength": 8 },
+          "password": { "type": "string", "minLength": 8 },
+          "passwordConfirmation": { "type": "string", "minLength": 8 }
+        },
+        "required": ["email", "name", "nim", "password", "passwordConfirmation"]
+      },
+      "LoginInput": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 }
+        },
+        "required": ["email", "password"]
+      },
+      "ChangePasswordInput": {
+        "type": "object",
+        "properties": {
+          "oldPassword": { "type": "string", "minLength": 8 },
+          "newPassword": { "type": "string", "minLength": 8 },
+          "passwordConfirmation": { "type": "string", "minLength": 8 }
+        },
+        "required": ["oldPassword", "newPassword", "passwordConfirmation"]
+      },
+      "UserInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 3 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "UserUpdateInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 3 },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "UserListItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "isActive": { "type": "boolean" },
+          "role": {
+            "type": "object",
+            "properties": { "name": { "type": "string" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["id", "name", "email", "isActive", "role"]
+      },
+      "CreateBuildingInput": {
+        "type": "object",
+        "properties": { "name": { "type": "string", "minLength": 1 } },
+        "required": ["name"]
+      },
+      "UpdateBuildingInput": {
+        "type": "object",
+        "properties": { "name": { "type": "string", "minLength": 1 } }
+      },
+      "Building": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "maxLength": 100 },
+          "createdAt": { "type": "string", "nullable": true }
+        },
+        "required": ["id", "name", "createdAt"]
+      },
+      "CreateRoomInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "buildingId": { "type": "string", "format": "uuid" },
+          "floor": { "type": "integer" }
+        },
+        "required": ["name", "buildingId", "floor"]
+      },
+      "UpdateRoomInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "buildingId": { "type": "string", "format": "uuid" },
+          "floor": { "type": "integer" }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "maxLength": 100 },
+          "buildingId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "nullable": true },
+          "floor": { "type": "integer" }
+        },
+        "required": ["id", "name", "buildingId", "createdAt", "floor"]
+      },
+      "CreateReportInput": {
+        "type": "object",
+        "properties": {
+          "reporterId": { "type": "string", "format": "uuid" },
+          "roomId": { "type": "string", "format": "uuid" },
+          "description": { "type": "string", "minLength": 1 },
+          "imageUrl": { "type": "string", "format": "uri" },
+          "status": { "type": "string", "enum": ["REPORTED", "IN_PROGRESS", "RESOLVED"], "default": "REPORTED" },
+          "isUrgent": { "type": "boolean", "default": false },
+          "categoryId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["reporterId", "roomId", "description", "categoryId"]
+      },
+      "UpdateReportInput": {
+        "type": "object",
+        "properties": {
+          "reporterId": { "type": "string", "format": "uuid" },
+          "roomId": { "type": "string", "format": "uuid" },
+          "description": { "type": "string", "minLength": 1 },
+          "imageUrl": { "type": "string", "format": "uri" },
+          "status": { "type": "string", "enum": ["REPORTED", "IN_PROGRESS", "RESOLVED"] },
+          "isUrgent": { "type": "boolean" },
+          "categoryId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "reporterId": { "type": "string", "format": "uuid" },
+          "roomId": { "type": "string", "format": "uuid" },
+          "description": { "type": "string", "nullable": true, "maxLength": 255 },
+          "imageUrl": { "type": "string", "nullable": true, "maxLength": 255 },
+          "status": { "type": "string", "nullable": true, "maxLength": 50 },
+          "isUrgent": { "type": "boolean" },
+          "categoryId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["id", "reporterId", "roomId", "description", "imageUrl", "status", "isUrgent", "categoryId"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "enum": [false] },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "message"]
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "enum": [false] },
+          "message": { "type": "string" },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": { "type": "string" },
+                "message": { "type": "string" }
+              },
+              "required": ["field", "message"]
+            }
+          }
+        },
+        "required": ["success", "message", "errors"]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
   },
   "paths": {
-    "/ping": {
-      "get": {
-        "summary": "Ping server",
+    "/auth/register": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered successfully" },
+          "409": { "description": "Conflict — user or NIM already exists" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Login user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginInput" }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Login successful",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "pong"
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "user": { "$ref": "#/components/schemas/UserListItem" }
+                      },
+                      "required": ["token", "user"]
                     }
                   }
                 }
               }
             }
+          },
+          "401": { "description": "Invalid credentials" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "put": {
+        "tags": ["auth"],
+        "summary": "Change password",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangePasswordInput" }
+            }
           }
+        },
+        "responses": {
+          "200": { "description": "Password changed successfully" },
+          "400": { "description": "Bad request — passwords do not match" },
+          "401": { "description": "Unauthenticated — token missing or invalid" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Get all users",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Users fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/UserListItem" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/users/OB": {
+      "post": {
+        "tags": ["users"],
+        "summary": "Create OB User",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "OB user created successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Role OB not found" },
+          "409": { "description": "Conflict — user already exists" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Get user by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "User fetched successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "put": {
+        "tags": ["users"],
+        "summary": "Update user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserUpdateInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User updated successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/users/{id}/status": {
+      "patch": {
+        "tags": ["users"],
+        "summary": "Update user status (toggle active/inactive)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "User status updated successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/buildings": {
+      "get": {
+        "tags": ["buildings"],
+        "summary": "Get all buildings",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Buildings fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Building" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthenticated" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "post": {
+        "tags": ["buildings"],
+        "summary": "Create building",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBuildingInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Building created successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/buildings/{id}": {
+      "get": {
+        "tags": ["buildings"],
+        "summary": "Get building by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Building fetched successfully" },
+          "404": { "description": "Building not found" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "put": {
+        "tags": ["buildings"],
+        "summary": "Update building",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateBuildingInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Building updated successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Building not found" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "delete": {
+        "tags": ["buildings"],
+        "summary": "Delete building",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Building deleted successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Building not found" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/rooms": {
+      "get": {
+        "tags": ["rooms"],
+        "summary": "Get all rooms",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Rooms fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Room" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthenticated" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "post": {
+        "tags": ["rooms"],
+        "summary": "Create room",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRoomInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Room created successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/rooms/{id}": {
+      "get": {
+        "tags": ["rooms"],
+        "summary": "Get room by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Room fetched successfully" },
+          "404": { "description": "Room not found" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "put": {
+        "tags": ["rooms"],
+        "summary": "Update room",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateRoomInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Room updated successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Room not found" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "delete": {
+        "tags": ["rooms"],
+        "summary": "Delete room",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Room deleted successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Room not found" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Get all reports",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Reports fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Report" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthenticated" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "post": {
+        "tags": ["reports"],
+        "summary": "Create report",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateReportInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Report created successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    },
+    "/reports/{id}": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Get report by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Report fetched successfully" },
+          "404": { "description": "Report not found" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "patch": {
+        "tags": ["reports"],
+        "summary": "Update report",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateReportInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Report updated successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Report not found" },
+          "422": { "description": "Validation failed" },
+          "500": { "description": "Internal server error" }
+        }
+      },
+      "delete": {
+        "tags": ["reports"],
+        "summary": "Delete report",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Report deleted successfully" },
+          "401": { "description": "Unauthenticated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Report not found" },
+          "500": { "description": "Internal server error" }
         }
       }
     }

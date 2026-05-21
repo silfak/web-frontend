@@ -53,7 +53,7 @@ export default function AdminDashboard() {
           gedungName = room.building.name;
         }
         if (room) {
-          ruangName = `Lantai ${room.floor}`;
+          ruangName = room.name || `Lantai ${room.floor}`;
         }
         const cId = item.categoryId || item.category_id;
         const category = categoriesList.find((c: any) => c.id === cId);

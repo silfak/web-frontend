@@ -37,10 +37,24 @@ export default function ManajemenView() {
         api.get("/api/users").catch(() => ({ data: { data: [] } }))
       ]);
 
-      setGedung((bRes.data?.data || []).map((b: any) => ({ id: b.id, nama: b.name, ruang: b.rooms?.length || 0 })));
-      setRuangan((rRes.data?.data || []).map((r: any) => ({ id: r.id, nama: r.name, gedung: r.building?.name || "", buildingId: r.building?.id || r.buildingId })));
-      setJenisMasalah((cRes.data?.data || []).map((c: any) => ({ id: c.id, nama: c.name })));
-      
+      const gedungData = (bRes.data?.data || []).map((b: any) => ({ 
+        id: b.id, nama: b.name, ruang: b.roomsCount ?? b.rooms?.length ?? 0
+      }));
+      setGedung(gedungData);
+
+      const roomsData = (rRes.data?.data || []).map((r: any) => ({ 
+        id: r.id, 
+        nama: r.name, 
+        gedung: r.building?.name || "", 
+        buildingId: r.building?.id || r.buildingId,
+      }));
+      setRuangan(roomsData);
+
+      const jenisData = (cRes.data?.data || []).map((c: any) => ({ 
+        id: c.id, nama: c.name
+      }));
+      setJenisMasalah(jenisData);
+
       const allUsers = (uRes.data?.data || []).map((u: any) => ({
         id: u.id, nama: u.name, email: u.email, nim: u.nim, role: u.role, status: u.status === "ACTIVE"
       }));
@@ -51,9 +65,7 @@ export default function ManajemenView() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   // MODAL TAMBAH
   const [showTambahModal, setShowTambahModal] = useState(false);
@@ -67,13 +79,17 @@ export default function ManajemenView() {
         await api.post("/api/buildings", { name: data.nama });
         showToast("Gedung berhasil ditambahkan");
       } else if (tambahType === "ruangan") {
-        await api.post("/api/rooms", { name: data.nama, buildingId: data.buildingId || data.gedung });
+        await api.post("/api/rooms", { name: data.nama, buildingId: data.buildingId || data.gedung, floor: Number(data.floor || 1) });
         showToast("Ruangan berhasil ditambahkan");
       } else if (tambahType === "jenis") {
         await api.post("/api/categories", { name: data.nama });
         showToast("Jenis masalah berhasil ditambahkan");
       } else if (tambahType === "ob" || tambahType === "admin") {
-        await api.post("/api/users", { ...data, role: tambahType === "admin" ? "ADMIN" : "OB", name: data.nama });
+        if (tambahType === "ob") {
+          await api.post("/api/users/OB", { email: data.email, password: data.password, name: data.nama });
+        } else {
+          await api.post("/api/users", { ...data, role: "ADMIN", name: data.nama });
+        }
         showToast(`Akun ${tambahType.toUpperCase()} berhasil dibuat`);
       }
       closeTambah();
@@ -119,9 +135,8 @@ export default function ManajemenView() {
   const confirmToggle = async () => {
     if (!selectedUser?.id) return;
     try {
-      const newStatus = selectedUser.status ? "INACTIVE" : "ACTIVE";
-      await api.patch(`/api/users/${selectedUser.id}`, { status: newStatus });
-      showToast(`Akun berhasil ${selectedUser.status ? 'dinonaktifkan' : 'diaktifkan'}`);
+      await api.patch(`/api/users/${selectedUser.id}/status`);
+      showToast(`Status akun berhasil diubah`);
       closeToggleModal();
       fetchData();
     } catch (err: any) {
@@ -141,16 +156,16 @@ export default function ManajemenView() {
     try {
       if (!editItem?.id) throw new Error("ID tidak ditemukan");
       if (editType === "gedung") {
-        await api.patch(`/api/buildings/${editItem.id}`, { name: editItem.nama });
+        await api.put(`/api/buildings/${editItem.id}`, { name: editItem.nama });
         showToast("Gedung berhasil diperbarui");
       } else if (editType === "ruangan") {
-        await api.patch(`/api/rooms/${editItem.id}`, { name: editItem.nama, buildingId: editItem.buildingId || editItem.gedung });
+        await api.put(`/api/rooms/${editItem.id}`, { name: editItem.nama, buildingId: editItem.buildingId || editItem.gedung, floor: editItem.floor || 1 });
         showToast("Ruangan berhasil diperbarui");
       } else if (editType === "jenis") {
-        await api.patch(`/api/categories/${editItem.id}`, { name: editItem.nama });
+        await api.put(`/api/categories/${editItem.id}`, { name: editItem.nama });
         showToast("Jenis masalah berhasil diperbarui");
       } else if (editType === "user" || editType === "admin") {
-        await api.patch(`/api/users/${editItem.id}`, { name: editItem.nama, nim: editItem.nim, password: editItem.password });
+        await api.put(`/api/users/${editItem.id}`, { name: editItem.nama, email: editItem.email });
         showToast("Data pengguna berhasil diperbarui");
       }
       closeEdit();
@@ -165,12 +180,22 @@ export default function ManajemenView() {
   const [page, setPage] = useState(1);
   const startIndex = (page - 1) * itemsPerPage;
 
-  const filteredUsers = userTab === "admin" ? admins : users.filter((u) => String(u.role || "").toLowerCase() === String(userTab || "").toLowerCase());
+  const filteredUsers = userTab === "admin"
+    ? admins
+    : users.filter((u) => String(u.role || "").toLowerCase() === String(userTab || "").toLowerCase());
+
   const currentRuangan = ruangan.slice(startIndex, startIndex + itemsPerPage);
   const currentMasalah = jenisMasalah.slice(startIndex, startIndex + itemsPerPage);
   const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
+  // ✅ totalPages dan totalItems dihitung berdasarkan tab yang aktif
+  const totalItems =
+    mainTab === "pengguna" ? filteredUsers.length :
+      mainTab === "jenis" ? jenisMasalah.length :
+        mode === "ruangan" ? ruangan.length : 0;
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
   const goPrev = () => page > 1 && setPage(page - 1);
   const goNext = () => page < totalPages && setPage(page + 1);
 
@@ -202,7 +227,18 @@ export default function ManajemenView() {
         />
 
         {(mainTab !== "fasilitas" || mode === "ruangan") && (
-          <PaginationManajemen mainTab={mainTab} mode={mode} startIndex={startIndex} itemsPerPage={itemsPerPage} page={page} setPage={setPage} goPrev={goPrev} goNext={goNext} />
+          <PaginationManajemen
+            mainTab={mainTab}
+            mode={mode}
+            startIndex={startIndex}
+            itemsPerPage={itemsPerPage}
+            page={page}
+            setPage={setPage}
+            goPrev={goPrev}
+            goNext={goNext}
+            totalPages={totalPages}
+            totalItems={totalItems}
+          />
         )}
       </div>
 

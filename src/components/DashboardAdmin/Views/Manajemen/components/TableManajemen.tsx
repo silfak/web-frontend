@@ -134,7 +134,8 @@ export default function TableManajemen({
             </td>
             <td className="p-3 flex gap-3 items-center">
               <button onClick={() => openEdit(user, "user")}><PencilLine size={16} className="text-green-600" /></button>
-              <button onClick={() => toggleStatus(i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${user.status ? "bg-green-600" : "bg-gray-300"}`}>
+
+              <button onClick={() => toggleStatus(startIndex + i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${user.status ? "bg-green-600" : "bg-gray-300"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full transition-transform ${user.status ? "translate-x-5" : ""}`} />
               </button>
             </td>
@@ -154,7 +155,8 @@ export default function TableManajemen({
             </td>
             <td className="p-3 flex gap-3 items-center">
               <button onClick={() => openEdit(user, "admin")}><PencilLine size={16} className="text-green-600" /></button>
-              <button onClick={() => toggleStatus(i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${user.status ? "bg-green-600" : "bg-gray-300"}`}>
+              {/* ✅ Fix: pakai startIndex + i bukan i saja */}
+              <button onClick={() => toggleStatus(startIndex + i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${user.status ? "bg-green-600" : "bg-gray-300"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full transition-transform ${user.status ? "translate-x-5" : ""}`} />
               </button>
             </td>

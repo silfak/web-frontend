@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetPingData, GetPingResponses } from './types.gen';
+import type { DeleteBuildingsByIdData, DeleteBuildingsByIdErrors, DeleteBuildingsByIdResponses, DeleteReportsByIdData, DeleteReportsByIdErrors, DeleteReportsByIdResponses, DeleteRoomsByIdData, DeleteRoomsByIdErrors, DeleteRoomsByIdResponses, GetBuildingsByIdData, GetBuildingsByIdErrors, GetBuildingsByIdResponses, GetBuildingsData, GetBuildingsErrors, GetBuildingsResponses, GetReportsByIdData, GetReportsByIdErrors, GetReportsByIdResponses, GetReportsData, GetReportsErrors, GetReportsResponses, GetRoomsByIdData, GetRoomsByIdErrors, GetRoomsByIdResponses, GetRoomsData, GetRoomsErrors, GetRoomsResponses, GetUsersByIdData, GetUsersByIdErrors, GetUsersByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, PatchReportsByIdData, PatchReportsByIdErrors, PatchReportsByIdResponses, PatchUsersByIdStatusData, PatchUsersByIdStatusErrors, PatchUsersByIdStatusResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthRegisterData, PostAuthRegisterErrors, PostAuthRegisterResponses, PostBuildingsData, PostBuildingsErrors, PostBuildingsResponses, PostReportsData, PostReportsErrors, PostReportsResponses, PostRoomsData, PostRoomsErrors, PostRoomsResponses, PostUsersObData, PostUsersObErrors, PostUsersObResponses, PutAuthChangePasswordData, PutAuthChangePasswordErrors, PutAuthChangePasswordResponses, PutBuildingsByIdData, PutBuildingsByIdErrors, PutBuildingsByIdResponses, PutRoomsByIdData, PutRoomsByIdErrors, PutRoomsByIdResponses, PutUsersByIdData, PutUsersByIdErrors, PutUsersByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,10 +19,255 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Ping server
+ * Register a new user
  */
-export const getPing = <ThrowOnError extends boolean = false>(options?: Options<GetPingData, ThrowOnError>) => (options?.client ?? client).get<GetPingResponses, unknown, ThrowOnError>({
+export const postAuthRegister = <ThrowOnError extends boolean = false>(options?: Options<PostAuthRegisterData, ThrowOnError>) => (options?.client ?? client).post<PostAuthRegisterResponses, PostAuthRegisterErrors, ThrowOnError>({
+    url: '/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Login user
+ */
+export const postAuthLogin = <ThrowOnError extends boolean = false>(options?: Options<PostAuthLoginData, ThrowOnError>) => (options?.client ?? client).post<PostAuthLoginResponses, PostAuthLoginErrors, ThrowOnError>({
     responseType: 'json',
-    url: '/ping',
+    url: '/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Change password
+ */
+export const putAuthChangePassword = <ThrowOnError extends boolean = false>(options?: Options<PutAuthChangePasswordData, ThrowOnError>) => (options?.client ?? client).put<PutAuthChangePasswordResponses, PutAuthChangePasswordErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/auth/change-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Get all users
+ */
+export const getUsers = <ThrowOnError extends boolean = false>(options?: Options<GetUsersData, ThrowOnError>) => (options?.client ?? client).get<GetUsersResponses, GetUsersErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/users',
     ...options
+});
+
+/**
+ * Create OB User
+ */
+export const postUsersOb = <ThrowOnError extends boolean = false>(options?: Options<PostUsersObData, ThrowOnError>) => (options?.client ?? client).post<PostUsersObResponses, PostUsersObErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/users/OB',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Get user by id
+ */
+export const getUsersById = <ThrowOnError extends boolean = false>(options: Options<GetUsersByIdData, ThrowOnError>) => (options.client ?? client).get<GetUsersByIdResponses, GetUsersByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/users/{id}',
+    ...options
+});
+
+/**
+ * Update user
+ */
+export const putUsersById = <ThrowOnError extends boolean = false>(options: Options<PutUsersByIdData, ThrowOnError>) => (options.client ?? client).put<PutUsersByIdResponses, PutUsersByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/users/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update user status (toggle active/inactive)
+ */
+export const patchUsersByIdStatus = <ThrowOnError extends boolean = false>(options: Options<PatchUsersByIdStatusData, ThrowOnError>) => (options.client ?? client).patch<PatchUsersByIdStatusResponses, PatchUsersByIdStatusErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/users/{id}/status',
+    ...options
+});
+
+/**
+ * Get all buildings
+ */
+export const getBuildings = <ThrowOnError extends boolean = false>(options?: Options<GetBuildingsData, ThrowOnError>) => (options?.client ?? client).get<GetBuildingsResponses, GetBuildingsErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/buildings',
+    ...options
+});
+
+/**
+ * Create building
+ */
+export const postBuildings = <ThrowOnError extends boolean = false>(options?: Options<PostBuildingsData, ThrowOnError>) => (options?.client ?? client).post<PostBuildingsResponses, PostBuildingsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/buildings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Delete building
+ */
+export const deleteBuildingsById = <ThrowOnError extends boolean = false>(options: Options<DeleteBuildingsByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteBuildingsByIdResponses, DeleteBuildingsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/buildings/{id}',
+    ...options
+});
+
+/**
+ * Get building by id
+ */
+export const getBuildingsById = <ThrowOnError extends boolean = false>(options: Options<GetBuildingsByIdData, ThrowOnError>) => (options.client ?? client).get<GetBuildingsByIdResponses, GetBuildingsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/buildings/{id}',
+    ...options
+});
+
+/**
+ * Update building
+ */
+export const putBuildingsById = <ThrowOnError extends boolean = false>(options: Options<PutBuildingsByIdData, ThrowOnError>) => (options.client ?? client).put<PutBuildingsByIdResponses, PutBuildingsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/buildings/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get all rooms
+ */
+export const getRooms = <ThrowOnError extends boolean = false>(options?: Options<GetRoomsData, ThrowOnError>) => (options?.client ?? client).get<GetRoomsResponses, GetRoomsErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rooms',
+    ...options
+});
+
+/**
+ * Create room
+ */
+export const postRooms = <ThrowOnError extends boolean = false>(options?: Options<PostRoomsData, ThrowOnError>) => (options?.client ?? client).post<PostRoomsResponses, PostRoomsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rooms',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Delete room
+ */
+export const deleteRoomsById = <ThrowOnError extends boolean = false>(options: Options<DeleteRoomsByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteRoomsByIdResponses, DeleteRoomsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rooms/{id}',
+    ...options
+});
+
+/**
+ * Get room by id
+ */
+export const getRoomsById = <ThrowOnError extends boolean = false>(options: Options<GetRoomsByIdData, ThrowOnError>) => (options.client ?? client).get<GetRoomsByIdResponses, GetRoomsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rooms/{id}',
+    ...options
+});
+
+/**
+ * Update room
+ */
+export const putRoomsById = <ThrowOnError extends boolean = false>(options: Options<PutRoomsByIdData, ThrowOnError>) => (options.client ?? client).put<PutRoomsByIdResponses, PutRoomsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rooms/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get all reports
+ */
+export const getReports = <ThrowOnError extends boolean = false>(options?: Options<GetReportsData, ThrowOnError>) => (options?.client ?? client).get<GetReportsResponses, GetReportsErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/reports',
+    ...options
+});
+
+/**
+ * Create report
+ */
+export const postReports = <ThrowOnError extends boolean = false>(options?: Options<PostReportsData, ThrowOnError>) => (options?.client ?? client).post<PostReportsResponses, PostReportsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/reports',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Delete report
+ */
+export const deleteReportsById = <ThrowOnError extends boolean = false>(options: Options<DeleteReportsByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteReportsByIdResponses, DeleteReportsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/reports/{id}',
+    ...options
+});
+
+/**
+ * Get report by id
+ */
+export const getReportsById = <ThrowOnError extends boolean = false>(options: Options<GetReportsByIdData, ThrowOnError>) => (options.client ?? client).get<GetReportsByIdResponses, GetReportsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/reports/{id}',
+    ...options
+});
+
+/**
+ * Update report
+ */
+export const patchReportsById = <ThrowOnError extends boolean = false>(options: Options<PatchReportsByIdData, ThrowOnError>) => (options.client ?? client).patch<PatchReportsByIdResponses, PatchReportsByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/reports/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
