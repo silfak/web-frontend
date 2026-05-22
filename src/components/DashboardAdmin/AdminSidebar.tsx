@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import logo from "@/assets/LandingPage/logosilfak.png";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, Settings2, UserCircle, ChevronRight, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Settings2, UserCircle, ChevronRight, LogOut, X } from "lucide-react";
 import type { ElementType } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
 
@@ -14,7 +14,13 @@ interface MenuItem {
   exact?: boolean;
 }
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  onLogoutClick?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function AdminSidebar({ onLogoutClick, isOpen, onClose }: AdminSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -34,7 +40,7 @@ export default function AdminSidebar() {
   const handleLogout = () => navigate("/");
 
   return (
-    <div className="w-full md:w-64 bg-[#107C41] text-white md:fixed md:h-screen flex flex-col">
+    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#107C41] text-white flex flex-col h-screen transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
       <ConfirmationModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
@@ -48,12 +54,17 @@ export default function AdminSidebar() {
       />
 
       <div>
-        <div className="flex items-center mb-4 gap-1 p-4">
-          <img src={logo} alt="logo" className="h-16 w-16 object-contain" />
-          <div className="leading-tight">
-            <h1 className="text-xl font-bold tracking-tighter">SILFAKADMIN</h1>
-            <p className="text-[11px] text-white/70 mt-1">Institutional Management</p>
+        <div className="flex items-center justify-between p-4 mb-4 gap-1">
+          <div className="flex items-center gap-1">
+            <img src={logo} alt="logo" className="h-16 w-16 object-contain" />
+            <div className="leading-tight">
+              <h1 className="text-xl font-bold tracking-tighter">SILFAKADMIN</h1>
+              <p className="text-[11px] text-white/70 mt-1">Institutional Management</p>
+            </div>
           </div>
+          <button onClick={onClose} className="md:hidden text-white/80 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
         </div>
 
         <div className="p-3 space-y-2 mt-2">

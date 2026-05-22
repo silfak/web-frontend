@@ -64,8 +64,9 @@ export default function TableManajemen({
   );
 
   return (
-    <table className="w-full text-sm border rounded-lg overflow-hidden">
-      <thead className="bg-green-700 text-white">
+    <div className="overflow-x-auto w-full border rounded-lg overflow-hidden">
+      <table className="w-full min-w-[700px] text-sm">
+        <thead className="bg-green-700 text-white">
         <tr>
           <th className="p-3 text-left">No</th>
           {mainTab === "jenis" && <th className="p-3 text-left">Nama Masalah</th>}
@@ -143,26 +144,27 @@ export default function TableManajemen({
         ))}
 
         {/* USER - ADMIN */}
-        {mainTab === "pengguna" && userTab === "admin" && currentUsers.map((user, i) => (
-          <tr key={i} className="border-b hover:bg-gray-50">
-            <td className="p-3">{startIndex + i + 1}</td>
-            <td className="p-3">{user.nama}</td>
-            <td className="p-3 text-xs">{user.email}</td>
-            <td className="p-3">
-              <span className={`px-2 py-1 text-xs rounded-full ${user.status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                {user.status ? "Aktif" : "Nonaktif"}
-              </span>
-            </td>
-            <td className="p-3 flex gap-3 items-center">
-              <button onClick={() => openEdit(user, "admin")}><PencilLine size={16} className="text-green-600" /></button>
-              {/* ✅ Fix: pakai startIndex + i bukan i saja */}
-              <button onClick={() => toggleStatus(startIndex + i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${user.status ? "bg-green-600" : "bg-gray-300"}`}>
-                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${user.status ? "translate-x-5" : ""}`} />
-              </button>
-            </td>
-          </tr>
-        ))}
+        {mainTab === "pengguna" && userTab === "admin" &&
+          currentUsers.map((item, i) => (
+            <tr key={i} className="border-b hover:bg-gray-50">
+              <td className="p-3">{startIndex + i + 1}</td>
+              <td className="p-3">{item.nama}</td>
+              <td className="p-3">{item.email}</td>
+              <td className="p-3">
+                <span className={`px-2 py-1 text-xs rounded-full ${item.status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {item.status ? "Aktif" : "Non-Aktif"}
+                </span>
+              </td>
+              <td className="p-3 flex gap-2">
+                <button onClick={() => openEdit(item, "admin")} className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100"><PencilLine size={16} /></button>
+                <button onClick={() => toggleStatus(startIndex + i)} className={`p-1.5 rounded text-sm font-medium ${item.status ? "text-red-600 bg-red-50 hover:bg-red-100" : "text-green-600 bg-green-50 hover:bg-green-100"}`}>
+                  {item.status ? "Nonaktifkan" : "Aktifkan"}
+                </button>
+              </td>
+            </tr>
+          ))}
       </tbody>
-    </table>
+      </table>
+    </div>
   );
 }

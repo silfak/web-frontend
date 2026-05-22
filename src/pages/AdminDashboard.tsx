@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const path = location.pathname;
 
   const [reports, setReports] = useState<LaporanAdmin[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const mapBackendStatus = (status: string): LaporanAdminStatus => {
     if (status === "IN_PROGRESS") return "inprogress";
@@ -60,7 +61,16 @@ export default function AdminDashboard() {
         masalahName = category?.name || item.title || "Masalah Fasilitas";
       }
 
-      const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+      let cleanDescription = item.description || "";
+      let extractedCatatan = "";
+      
+      const catatanMatch = cleanDescription.match(/\[Catatan OB:\s*(.*?)\]/);
+      if (catatanMatch) {
+          extractedCatatan = catatanMatch[1];
+          cleanDescription = cleanDescription.replace(/\[Catatan OB:\s*.*?\]/g, "");
+      }
+      
+      cleanDescription = cleanDescription.replace(/\[Lokasi:\s*.*?\]/, "").trim();
       const repId = item.reporterId || item.reporter_id;
       const reporter = usersList.find((u: any) => u.id === repId);
 
@@ -94,12 +104,14 @@ export default function AdminDashboard() {
         api.get("/api/categories"),
         api.get("/api/users").catch(() => ({ data: { data: [] } }))
       ]);
-      setReports(mapBackendReports(
+      const mappedData = mapBackendReports(
         reportsRes.data.data || [],
         roomsRes.data.data || [],
         categoriesRes.data.data || [],
         usersRes.data.data || []
-      ));
+      ).sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+      
+      setReports(mappedData);
     } catch (err) {
       console.error("Gagal menarik data laporan admin:", err);
     }
@@ -125,11 +137,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col md:ml-64">
-        <div className="p-4 flex-1">
-          <AdminHeader title={getTitle()} />
+    <div className="flex h-screen bg-[#F9FBF9] overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 flex flex-col overflow-y-auto w-full">
+        <div className="p-4 md:p-10 flex-1">
+          <AdminHeader title={getTitle()} onOpenSidebar={() => setIsSidebarOpen(true)} />
           {renderContent()}
         </div>
         <Footer />

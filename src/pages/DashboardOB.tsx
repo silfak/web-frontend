@@ -51,6 +51,7 @@ export default function DashboardOB() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pendingReport, setPendingReport] = useState<Report | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [toast, setToast] = useState<{ show: boolean; message: ToastMessage }>({
@@ -144,11 +145,13 @@ export default function DashboardOB() {
         api.get("/api/rooms"),
         api.get("/api/categories")
       ]);
-      setReports(mapBackendReports(
+      const mappedData = mapBackendReports(
         reportsRes.data.data || [],
         roomsRes.data.data || [],
         categoriesRes.data.data || []
-      ));
+      ).sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+
+      setReports(mappedData);
     } catch (err) {
       console.error("Gagal menarik data laporan:", err);
     }
@@ -340,18 +343,33 @@ export default function DashboardOB() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F9FBF9] overflow-hidden">
-      <SidebarOB onLogoutClick={() => setIsConfirmLogoutOpen(true)} />
+    <div className="flex h-screen bg-[#F9FBF9] overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <SidebarOB
+        onLogoutClick={() => setIsConfirmLogoutOpen(true)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <div className="p-10 flex-1">
+        <div className="p-4 md:p-10 flex-1">
           <Header
             title={getTitle()}
             onProfileClick={() => navigate("/profile")}
             onViewDetail={showDetail}
             reports={reports}
+            onOpenSidebar={() => setIsSidebarOpen(true)}
           />
-          <div className="mt-4">{renderContent()}</div>
+          <div className="mt-4">
+            {renderContent()}
+          </div>
         </div>
         <Footer />
       </div>

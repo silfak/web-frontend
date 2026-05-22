@@ -11,7 +11,7 @@ export default function DetailLaporanView({ report, onBack }: { report: any; onB
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Kolom Kiri: Detail Teks */}
-        <div className="lg:col-span-8 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="lg:col-span-8 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
           <div className="flex justify-between items-start mb-6">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>

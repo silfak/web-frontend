@@ -145,10 +145,17 @@ export default function DashboardView({ laporanData = [] }: DashboardViewProps) 
           {data.length === 0 ? (
             <EmptyState icon={BarChart3} title="Belum ada data untuk ditampilkan" desc="Belum ada data laporan. Tren kategori masalah akan muncul setelah ada laporan masuk" />
           ) : (
-            <div className="w-full h-64 relative z-0">
+            <div className="w-full h-80 relative z-0">
               <ResponsiveContainer>
-                <BarChart data={data}>
-                  <XAxis dataKey="name" />
+                <BarChart data={data} margin={{ bottom: 20 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80} 
+                    interval={0} 
+                    tick={{ fontSize: 11 }} 
+                  />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="total" fill="#107C41" />

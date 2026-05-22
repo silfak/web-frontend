@@ -66,7 +66,7 @@ export default function DetailLaporanOB({ report, onBack, onUpdateStatus }: Deta
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* KOLOM KIRI: Informasi Laporan (Sesuai Gambar 1) */}
-        <div className="lg:col-span-5 bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="lg:col-span-5 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID Laporan</p>
@@ -131,7 +131,7 @@ export default function DetailLaporanOB({ report, onBack, onUpdateStatus }: Deta
 
         {/* KOLOM KANAN: Update Status */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
             <h3 className="text-xl font-black text-gray-800 mb-6 border-b border-gray-50 pb-4 tracking-tight">Update Status</h3>
             <div className="space-y-6">
               <div className="space-y-2">

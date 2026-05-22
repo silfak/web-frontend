@@ -2,9 +2,9 @@ import React from "react";
 import logo from "@/assets/LandingPage/logosilfak.png";
 import profile from "@/assets/profile.png";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, UserCircle, LogOut, X } from "lucide-react";
 
-export default function Sidebar({ user, onLogoutClick }) {
+export default function Sidebar({ user, onLogoutClick, isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,12 +22,17 @@ export default function Sidebar({ user, onLogoutClick }) {
   const userName = user?.name || "Rafi Fauzi";
 
   return (
-    <div className="w-64 bg-[#107C41] text-white flex flex-col justify-between p-6 h-screen">
+    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#107C41] text-white flex flex-col justify-between p-6 h-screen transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
       <div>
-        {/* Logo SILFAK */}
-        <div className="flex items-center mb-4">
-          <img src={logo} className="h-17 max-w-full mt-1.5" />
-          <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
+        {/* Header Sidebar (Logo + Tombol Tutup) */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <img src={logo} className="h-17 max-w-full mt-1.5" />
+            <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
+          </div>
+          <button onClick={onClose} className="md:hidden text-white/80 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
         </div>
 
         {/* KARTU PROFIL (Gaya Figma) */}
@@ -40,7 +45,7 @@ export default function Sidebar({ user, onLogoutClick }) {
             />
           </div>
           <div className="overflow-hidden">
-            <h3 className="text-[#107C41] font-bold text-lg truncate">{userName}</h3>
+            <h3 className="text-[#107C41] font-bold text-lg break-words whitespace-normal leading-tight">{userName}</h3>
             <p className="bg-[#E7F3ED] text-[#107C41] px-5 py-1.5 rounded-full text-[10px] font-bold w-fit mt-2 uppercase tracking-wider">Mahasiswa</p>
           </div>
         </div>

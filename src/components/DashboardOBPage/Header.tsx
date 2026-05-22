@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Bell, CircleUser, X, ClipboardList, BellOff, RefreshCw, CheckCircle } from "lucide-react";
+import { Bell, CircleUser, X, ClipboardList, BellOff, RefreshCw, CheckCircle, Menu } from "lucide-react";
 import type { Report } from "@/types";
 
 interface HeaderProps {
   title: string;
-  onProfileClick: () => void;
-  onViewDetail: (report: Report) => void;
+  onProfileClick?: () => void;
+  onViewDetail?: (report: Report) => void;
+  onOpenSidebar?: () => void;
   reports?: Report[];
 }
 
-export default function Header({ title, onProfileClick, onViewDetail, reports = [] }: HeaderProps) {
+export default function Header({ title, onProfileClick, onViewDetail, onOpenSidebar, reports = [] }: HeaderProps) {
   const [showNotif, setShowNotif] = useState(false);
   const [lastReadTime, setLastReadTime] = useState(0);
 
@@ -29,7 +30,7 @@ export default function Header({ title, onProfileClick, onViewDetail, reports = 
   };
 
   const recentReports = useMemo(() => {
-    return [...reports]
+    return [...(reports || [])]
       .sort((a, b) => (b.rawDate?.getTime() || 0) - (a.rawDate?.getTime() || 0))
       .slice(0, 4);
   }, [reports]);
@@ -62,11 +63,16 @@ export default function Header({ title, onProfileClick, onViewDetail, reports = 
   };
 
   return (
-    <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200 relative">
-      <h2 className="text-2xl font-bold text-[#107C41]">{title}</h2>
+    <div className="flex justify-between items-center mb-6 md:mb-8 pb-4 border-b border-gray-200 relative">
+      <div className="flex items-center gap-3">
+        <button onClick={onOpenSidebar} className="md:hidden text-gray-500 hover:text-[#107C41] transition-colors">
+          <Menu size={24} />
+        </button>
+        <h2 className="text-xl md:text-2xl font-bold text-[#107C41]">{title}</h2>
+      </div>
       
-      <div className="flex gap-6 items-center text-gray-400">
-        <div className="relative">
+      <div className="flex gap-4 md:gap-6 items-center text-gray-400">
+        <div className="relative flex items-center">
           <button 
             onClick={handleToggleNotif}
             className={`hover:text-[#107C41] transition-all relative ${showNotif ? 'text-[#107C41]' : ''}`}
@@ -134,7 +140,7 @@ export default function Header({ title, onProfileClick, onViewDetail, reports = 
           )}
         </div>
 
-        <button onClick={onProfileClick} className="hover:text-[#107C41] transition-all">
+        <button onClick={onProfileClick} className="hover:text-[#107C41] transition-all flex items-center">
           <CircleUser size={24} />
         </button>
       </div>
