@@ -155,10 +155,11 @@ export default function TableManajemen({
                   {item.status ? "Aktif" : "Non-Aktif"}
                 </span>
               </td>
-              <td className="p-3 flex gap-2">
-                <button onClick={() => openEdit(item, "admin")} className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100"><PencilLine size={16} /></button>
-                <button onClick={() => toggleStatus(startIndex + i)} className={`p-1.5 rounded text-sm font-medium ${item.status ? "text-red-600 bg-red-50 hover:bg-red-100" : "text-green-600 bg-green-50 hover:bg-green-100"}`}>
-                  {item.status ? "Nonaktifkan" : "Aktifkan"}
+              <td className="p-3 flex gap-3 items-center">
+                <button onClick={() => openEdit(item, "admin")}><PencilLine size={16} className="text-green-600" /></button>
+
+                <button onClick={() => toggleStatus(startIndex + i)} className={`w-10 h-5 flex items-center rounded-full p-1 transition-colors ${item.status ? "bg-green-600" : "bg-gray-300"}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${item.status ? "translate-x-5" : ""}`} />
                 </button>
               </td>
             </tr>
