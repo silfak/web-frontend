@@ -17,6 +17,7 @@ export interface Report {
   foto?: string | null;
   catatan?: string;
   rawDate?: Date;
+  rawDescription?: string;
 }
 
 export type ReportStatus = "Reported" | "Inprogress" | "Resolved";
@@ -35,6 +36,8 @@ export interface LaporanAdmin {
   status: LaporanAdminStatus;
   deskripsi?: string;
   foto?: string | null;
+  catatan?: string;
+  rawDescription?: string;
 }
 
 export type LaporanAdminStatus = "reported" | "inprogress" | "resolved";

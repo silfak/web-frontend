@@ -88,7 +88,18 @@ export default function Dashboard() {
         }
       }
 
-      const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+
+      let cleanDescription = item.description || "";
+      let extractedCatatan = "";
+      
+      const catatanMatch = cleanDescription.match(/\[Catatan OB:\s*(.*?)\]/);
+      if (catatanMatch) {
+          extractedCatatan = catatanMatch[1];
+          cleanDescription = cleanDescription.replace(/\[Catatan OB:\s*.*?\]/g, "");
+      }
+      
+      cleanDescription = cleanDescription.replace(/\[Lokasi:\s*.*?\]/g, "").trim();
+
       const createdAt = item.createdAt || item.created_at;
       const fotoUrl = item.imageUrl || item.image_url;
 
@@ -103,8 +114,10 @@ export default function Dashboard() {
         masalah: masalahName,
         deskripsi: cleanDescription,
         status: mapBackendStatus(item.status),
+        catatan: extractedCatatan || item.note || "",
         foto: fotoUrl || null,
         rawDate: createdAt ? new Date(createdAt) : new Date(0),
+        rawDescription: item.description || "",
       };
     });
   };

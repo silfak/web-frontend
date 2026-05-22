@@ -80,6 +80,8 @@ export default function AdminDashboard() {
         status: mapBackendStatus(item.status),
         deskripsi: cleanDescription,
         foto: item.imageUrl || item.image_url || null,
+        catatan: extractedCatatan || item.note || "",
+        rawDescription: item.description || "",
       };
     });
   };

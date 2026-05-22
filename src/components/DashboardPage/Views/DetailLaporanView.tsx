@@ -45,6 +45,21 @@ export default function DetailLaporanView({ report, onBack }: { report: any; onB
               {report.deskripsi || "Tidak ada deskripsi"}
             </div>
           </div>
+
+          {/* TAMPILAN CATATAN OB */}
+          {report.catatan && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-2xl flex gap-4 animate-in fade-in zoom-in duration-300">
+              <div className="text-amber-600 shrink-0 mt-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-black text-amber-700 uppercase tracking-wider">Catatan OB</p>
+                <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                  {report.catatan}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Kolom Kanan: Foto Bukti */}

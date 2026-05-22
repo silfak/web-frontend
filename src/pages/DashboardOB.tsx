@@ -103,7 +103,17 @@ export default function DashboardOB() {
         }
       }
 
-      const cleanDescription = item.description?.replace(/\[Lokasi:\s*.*?\]/, "").trim() || "";
+      let cleanDescription = item.description || "";
+      let extractedCatatan = "";
+      
+      const catatanMatch = cleanDescription.match(/\[Catatan OB:\s*(.*?)\]/);
+      if (catatanMatch) {
+          extractedCatatan = catatanMatch[1];
+          cleanDescription = cleanDescription.replace(/\[Catatan OB:\s*.*?\]/g, "");
+      }
+      
+      cleanDescription = cleanDescription.replace(/\[Lokasi:\s*.*?\]/g, "").trim();
+
       const createdAt = item.createdAt || item.created_at;
       const fotoUrl = item.imageUrl || item.image_url;
 
@@ -118,9 +128,10 @@ export default function DashboardOB() {
         masalah: masalahName,
         deskripsi: cleanDescription,
         status: mapBackendStatus(item.status),
-        catatan: item.note || "",
+        catatan: extractedCatatan || item.note || "",
         foto: fotoUrl || null,
         rawDate: createdAt ? new Date(createdAt) : new Date(0),
+        rawDescription: item.description || "",
       };
     });
   };
@@ -175,11 +186,21 @@ export default function DashboardOB() {
   ) => {
     try {
       let res;
+      
+      const originalReport = reports.find(r => r.id === idLaporan);
+      const rawDescription = originalReport?.rawDescription || originalReport?.deskripsi || "";
+      
+      let updatedDescription = rawDescription;
+      updatedDescription = updatedDescription.replace(/\[Catatan OB:\s*.*?\]/g, "").trim();
+      
+      if (catatanBaru && catatanBaru.trim() !== "") {
+        updatedDescription += ` [Catatan OB: ${catatanBaru.trim()}]`;
+      }
 
       if (fotoBase64) {
         const formData = new FormData();
         formData.append("status", mapFrontendStatus(statusBaru));
-        formData.append("note", catatanBaru);
+        formData.append("description", updatedDescription);
 
         const arr = fotoBase64.split(",");
         const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
@@ -196,7 +217,7 @@ export default function DashboardOB() {
       } else {
         res = await api.patch(`/api/reports/${idLaporan}`, {
           status: mapFrontendStatus(statusBaru),
-          note: catatanBaru,
+          description: updatedDescription,
         });
       }
 

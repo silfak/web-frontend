@@ -23,7 +23,7 @@ import api from "@/lib/axios";
 export default function DetailLaporan({ laporan, onKembali, onUpdate }: DetailLaporanProps) {
   const { toasts, showToast, removeToast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<LaporanAdminStatus>(laporan?.status || "reported");
-  const [catatan, setCatatan] = useState("");
+  const [catatan, setCatatan] = useState(laporan?.catatan || "");
   const [isLoading, setIsLoading] = useState(false);
 
   const statusOptions: StatusOption[] = [
@@ -48,9 +48,16 @@ export default function DetailLaporan({ laporan, onKembali, onUpdate }: DetailLa
 
     setIsLoading(true);
     try {
+      let updatedDescription = laporan.rawDescription || laporan.deskripsi || "";
+      updatedDescription = updatedDescription.replace(/\[Catatan OB:\s*.*?\]/g, "").trim();
+      
+      if (catatan.trim() !== "") {
+        updatedDescription += ` [Catatan OB: ${catatan.trim()}]`;
+      }
+
       const res = await api.patch(`/api/reports/${laporan.originalId}`, {
         status: mapFrontendStatus(selectedStatus),
-        note: catatan,
+        description: updatedDescription,
       });
 
       if (res.data && res.data.success === false) {
@@ -112,6 +119,20 @@ export default function DetailLaporan({ laporan, onKembali, onUpdate }: DetailLa
               {laporan?.deskripsi || "AC diruangan menyala terus ketika sore hari dan tiap hari kamis."}
             </div>
           </div>
+
+          {laporan?.catatan && (
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg flex gap-3">
+              <div className="text-amber-600 shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Catatan Saat Ini</p>
+                <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                  {laporan.catatan}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div>
             <p className="text-xs text-gray-400 mb-2">Foto Bukti</p>

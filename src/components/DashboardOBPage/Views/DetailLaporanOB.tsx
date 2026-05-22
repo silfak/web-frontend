@@ -12,7 +12,7 @@ interface DetailLaporanOBProps {
 
 export default function DetailLaporanOB({ report, onBack, onUpdateStatus }: DetailLaporanOBProps) {
   const [newStatus, setNewStatus] = useState<ReportStatus>(report.status);
-  const [noteText, setNoteText] = useState("");
+  const [noteText, setNoteText] = useState(report.catatan || "");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [fotoBase64, setFotoBase64] = useState<string | null>(null);
 
