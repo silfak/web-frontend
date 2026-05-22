@@ -146,23 +146,48 @@ export default function Dashboard() {
     if (!pendingReport) return;
 
     try {
-      // Kirim data laporan ke backend
-      const res = await api.post("/api/reports", {
-        reporterId: user?.id,
-        roomId: pendingReport.roomId,
-        categoryId: pendingReport.categoryId,
-        description: pendingReport.description,
-        isUrgent: pendingReport.priority === "high",
-        imageUrl: pendingReport.foto || undefined,
-      });
+      let res;
+
+      if (pendingReport.foto) {
+        // ✅ Kirim pakai FormData kalau ada foto
+        const formData = new FormData();
+        formData.append("reporterId", user?.id || "");
+        formData.append("roomId", pendingReport.roomId);
+        formData.append("categoryId", pendingReport.categoryId || "");
+        formData.append("description", pendingReport.description);
+        formData.append("isUrgent", String(pendingReport.priority === "high"));
+
+        // Convert base64 → File object
+        const base64 = pendingReport.foto;
+        const arr = base64.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) u8arr[n] = bstr.charCodeAt(n);
+        const file = new File([u8arr], "foto.jpg", { type: mime });
+
+        formData.append("image", file);
+
+        res = await api.post("/api/reports", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // ✅ Kirim pakai JSON kalau tidak ada foto
+        res = await api.post("/api/reports", {
+          reporterId: user?.id,
+          roomId: pendingReport.roomId,
+          categoryId: pendingReport.categoryId,
+          description: pendingReport.description,
+          isUrgent: pendingReport.priority === "high",
+        });
+      }
 
       if (res.data && res.data.success === false) {
         throw new Error(res.data.message || JSON.stringify(res.data));
       }
 
-      // Tarik ulang data asli dari database
       await fetchReportsData();
-
       setIsModalOpen(false);
       setIsConfirmSubmitOpen(false);
       setPendingReport(null);
@@ -171,12 +196,12 @@ export default function Dashboard() {
         message: {
           title: "Laporan Berhasil Dikirim",
           desc: "Laporan kamu sudah masuk dan akan segera ditangani",
-        }
+        },
       });
     } catch (err: any) {
       console.error("Gagal mengirim laporan ke backend:", err);
       const serverMsg = err.response?.data?.message || JSON.stringify(err.response?.data) || err.message;
-      alert(`Terjadi kesalahan saat mengirim laporan ke server: ${serverMsg}`);
+      alert(`Terjadi kesalahan saat mengirim laporan: ${serverMsg}`);
     }
   };
 

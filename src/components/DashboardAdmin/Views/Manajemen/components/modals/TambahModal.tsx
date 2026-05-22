@@ -19,7 +19,6 @@ interface TambahModalProps {
 }
 
 export default function TambahModal({ show, type, onClose, onConfirm, gedungList = [] }: TambahModalProps) {
-  if (!show) return null;
 
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
@@ -29,6 +28,8 @@ export default function TambahModal({ show, type, onClose, onConfirm, gedungList
   const [floor, setFloor] = useState("1");
   const [showPassword, setShowPassword] = useState(false);
   const [showKonfirmasi, setShowKonfirmasi] = useState(false);
+
+  if (!show) return null;
 
   const getTitle = (): string => {
     if (type === "gedung") return "Tambah Gedung";

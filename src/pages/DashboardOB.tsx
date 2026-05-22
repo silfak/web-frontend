@@ -79,7 +79,7 @@ export default function DashboardOB() {
       let gedungName = "Gedung Dewi Sartika";
       let ruangName = "Lantai 1";
       let masalahName = "Masalah Fasilitas";
-      
+
       const locAndProblemMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\s*\|\s*Masalah:\s*(.*?)\]/);
       if (locAndProblemMatch) {
         gedungName = locAndProblemMatch[1];
@@ -110,8 +110,8 @@ export default function DashboardOB() {
       return {
         id: item.id,
         friendlyId: `SFK-${item.id?.substring(0, 6).toUpperCase()}`,
-        tgl: createdAt 
-          ? new Date(createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
+        tgl: createdAt
+          ? new Date(createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
           : "Baru saja",
         lokasi: gedungName,
         ruang: ruangName,
@@ -174,12 +174,31 @@ export default function DashboardOB() {
     fotoBase64?: string | null
   ) => {
     try {
-      const res = await api.patch(`/api/reports/${idLaporan}`, {
-        status: mapFrontendStatus(statusBaru),
-        note: catatanBaru,
-        // Dihapus sementara untuk mencegah Vercel 500 Error
-        // imageUrl: fotoBase64 || undefined,
-      });
+      let res;
+
+      if (fotoBase64) {
+        const formData = new FormData();
+        formData.append("status", mapFrontendStatus(statusBaru));
+        formData.append("note", catatanBaru);
+
+        const arr = fotoBase64.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) u8arr[n] = bstr.charCodeAt(n);
+        const file = new File([u8arr], "foto.jpg", { type: mime });
+        formData.append("image", file);
+
+        res = await api.patch(`/api/reports/${idLaporan}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        res = await api.patch(`/api/reports/${idLaporan}`, {
+          status: mapFrontendStatus(statusBaru),
+          note: catatanBaru,
+        });
+      }
 
       if (res.data && res.data.success === false) {
         throw new Error(res.data.message || JSON.stringify(res.data));
@@ -197,7 +216,6 @@ export default function DashboardOB() {
       alert("Gagal memperbarui status laporan.");
     }
   };
-
   const handleOpenConfirmation = (data: Report) => {
     setPendingReport(data);
     setIsConfirmSubmitOpen(true);
@@ -205,25 +223,50 @@ export default function DashboardOB() {
 
   const handleActualSubmit = async () => {
     if (!pendingReport) return;
-    
+
     try {
-      // Kirim data laporan ke backend
-      const res = await api.post("/api/reports", {
-        reporterId: user?.id,
-        roomId: (pendingReport as any).roomId,
-        categoryId: (pendingReport as any).categoryId,
-        description: (pendingReport as any).description,
-        isUrgent: (pendingReport as any).priority === "high",
-        imageUrl: (pendingReport as any).foto || undefined,
-      });
+      let res;
+
+      if ((pendingReport as any).foto) {
+        // ✅ Kirim pakai FormData kalau ada foto
+        const formData = new FormData();
+        formData.append("reporterId", user?.id || "");
+        formData.append("roomId", (pendingReport as any).roomId);
+        formData.append("categoryId", (pendingReport as any).categoryId || "");
+        formData.append("description", (pendingReport as any).description);
+        formData.append("isUrgent", String((pendingReport as any).priority === "high"));
+
+        // Convert base64 → File object
+        const base64 = (pendingReport as any).foto;
+        const arr = base64.split(",");
+        const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) u8arr[n] = bstr.charCodeAt(n);
+        const file = new File([u8arr], "foto.jpg", { type: mime });
+
+        formData.append("image", file);
+
+        res = await api.post("/api/reports", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // ✅ Kirim pakai JSON kalau tidak ada foto
+        res = await api.post("/api/reports", {
+          reporterId: user?.id,
+          roomId: (pendingReport as any).roomId,
+          categoryId: (pendingReport as any).categoryId,
+          description: (pendingReport as any).description,
+          isUrgent: (pendingReport as any).priority === "high",
+        });
+      }
 
       if (res.data && res.data.success === false) {
         throw new Error(res.data.message || JSON.stringify(res.data));
       }
 
-      // Tarik ulang data asli dari database
       await fetchReportsData();
-
       setIsModalOpen(false);
       setIsConfirmSubmitOpen(false);
       setPendingReport(null);

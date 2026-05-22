@@ -3,22 +3,38 @@ import { X, Upload, Send } from "lucide-react";
 import api from "@/lib/axios";
 import { useAuth } from "@/context/AuthContext";
 
+// Extract lantai dari nama ruangan
+// "Ruang FIKLAB-201" → 2, "Toilet Lantai 3" → 3, fallback ke r.floor
+function extractFloor(roomName: string, fallback: number): number {
+  // Pola: angka pertama dari kode ruangan (misal FIKLAB-201 → 2)
+  const codeMatch = roomName.match(/-(\d)(\d{2})$/);
+  if (codeMatch) return parseInt(codeMatch[1]);
+
+  // Pola: "Lantai X" di nama
+  const lantaiMatch = roomName.match(/lantai\s+(\d+)/i);
+  if (lantaiMatch) return parseInt(lantaiMatch[1]);
+
+  return fallback;
+}
+
 export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
   const { user } = useAuth();
 
   const [buildings, setBuildings] = useState<any[]>([]);
   const [allRooms, setAllRooms] = useState<any[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [deskripsi, setDeskripsi] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Fetch buildings & rooms saat modal dibuka
+  // Fetch buildings, rooms, dan categories saat modal dibuka
   useEffect(() => {
     if (isOpen) {
       api.get("/api/buildings")
@@ -28,21 +44,26 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
       api.get("/api/rooms")
         .then(res => setAllRooms(res.data.data || []))
         .catch(err => console.error("Gagal mengambil data ruangan:", err));
+
+      api.get("/api/categories")
+        .then(res => setCategories(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil jenis masalah:", err));
     }
   }, [isOpen]);
 
-  // ✅ Reset state saat modal ditutup
+  // Reset state saat modal ditutup
   useEffect(() => {
     if (!isOpen) {
       setSelectedBuilding("");
       setSelectedRoom("");
+      setSelectedCategory("");
       setDeskripsi("");
       setSelectedFile(null);
       setFilteredRooms([]);
     }
   }, [isOpen]);
 
-  // ✅ Filter ruangan berdasarkan gedung yang dipilih
+  // Filter ruangan berdasarkan gedung yang dipilih
   useEffect(() => {
     if (selectedBuilding) {
       const filtered = allRooms.filter(
@@ -98,6 +119,10 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
       alert("Pilih ruangan/lantai terlebih dahulu.");
       return;
     }
+    if (!selectedCategory) {
+      alert("Pilih jenis masalah terlebih dahulu.");
+      return;
+    }
     if (!deskripsi.trim()) {
       alert("Masukkan deskripsi masalah terlebih dahulu.");
       return;
@@ -105,17 +130,20 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
 
     const buildingName = buildings.find(b => b.id === selectedBuilding)?.name || "Gedung Unknown";
     const roomName = filteredRooms.find(r => r.id === selectedRoom)?.name || "Ruang Unknown";
+    const categoryName = categories.find(c => c.id === selectedCategory)?.name || "";
 
     const newReportData = {
-      reporterId: user?.id,         // ✅ wajib ada di API
+      reporterId: user?.id,
       roomId: selectedRoom,
+      categoryId: selectedCategory,
       description: deskripsi.trim(),
-      isUrgent: false,              // ✅ wajib ada di API, default false
+      isUrgent: false,
       imageUrl: selectedFile?.preview || undefined,
 
       // Untuk tampilan UI lokal
       lokasiName: buildingName,
       ruangName: roomName,
+      categoryName,
       foto: selectedFile?.preview || null,
     };
 
@@ -171,11 +199,29 @@ export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
                   </option>
                   {filteredRooms.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name} (Lantai {r.floor})
+                      {r.name} (Lantai {extractFloor(r.name, r.floor)})
                     </option>
                   ))}
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Jenis Masalah */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-[#107C41] border-l-4 border-[#107C41] pl-3 uppercase tracking-widest text-xs">Jenis Masalah</h4>
+            <div>
+              <label className="block text-gray-600 font-bold mb-2">Pilih Jenis Masalah</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none"
+              >
+                <option value="">Pilih Jenis Masalah</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

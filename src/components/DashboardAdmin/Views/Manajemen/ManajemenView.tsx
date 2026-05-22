@@ -14,9 +14,12 @@ import EditModal from "./components/modals/EditModal";
 import TambahModal from "./components/modals/TambahModal";
 import type { GedungItem, RuanganItem, JenisMasalahItem, UserItem, AnyItem } from "@/types";
 import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ManajemenView() {
   const { toasts, showToast, removeToast } = useToast();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "superadmin";
 
   const [mainTab, setMainTab] = useState("fasilitas");
   const [mode, setMode] = useState("gedung");
@@ -37,28 +40,14 @@ export default function ManajemenView() {
         api.get("/api/users").catch(() => ({ data: { data: [] } }))
       ]);
 
-      const gedungData = (bRes.data?.data || []).map((b: any) => ({ 
-        id: b.id, nama: b.name, ruang: b.roomsCount ?? b.rooms?.length ?? 0
-      }));
-      setGedung(gedungData);
-
-      const roomsData = (rRes.data?.data || []).map((r: any) => ({ 
-        id: r.id, 
-        nama: r.name, 
-        gedung: r.building?.name || "", 
-        buildingId: r.building?.id || r.buildingId,
-      }));
-      setRuangan(roomsData);
-
-      const jenisData = (cRes.data?.data || []).map((c: any) => ({ 
-        id: c.id, nama: c.name
-      }));
-      setJenisMasalah(jenisData);
+      setGedung((bRes.data?.data || []).map((b: any) => ({ id: b.id, nama: b.name, ruang: b.roomsCount ?? b.rooms?.length ?? 0 })));
+      setRuangan((rRes.data?.data || []).map((r: any) => ({ id: r.id, nama: r.name, gedung: r.building?.name || "", buildingId: r.building?.id || r.buildingId })));
+      setJenisMasalah((cRes.data?.data || []).map((c: any) => ({ id: c.id, nama: c.name })));
 
       const allUsers = (uRes.data?.data || []).map((u: any) => ({
-        id: u.id, nama: u.name, email: u.email, nim: u.nim, role: u.role, status: u.status === "ACTIVE"
+        id: u.id, nama: u.name, email: u.email, nim: u.nim, role: u.role?.name || u.role || "", status: u.isActive ?? u.status === "ACTIVE"
       }));
-      setUsers(allUsers.filter((u: any) => u.role !== "ADMIN"));
+      setUsers(allUsers.filter((u: any) => u.role !== "ADMIN" && u.role !== "SUPERADMIN"));
       setAdmins(allUsers.filter((u: any) => u.role === "ADMIN"));
     } catch (error) {
       console.error("Gagal menarik data manajemen:", error);
@@ -88,7 +77,11 @@ export default function ManajemenView() {
         if (tambahType === "ob") {
           await api.post("/api/users/OB", { email: data.email, password: data.password, name: data.nama });
         } else {
-          await api.post("/api/users", { ...data, role: "ADMIN", name: data.nama });
+          await api.post("/api/users/ADMIN", {
+            name: data.nama,
+            email: data.email,
+            password: data.password,
+          });
         }
         showToast(`Akun ${tambahType.toUpperCase()} berhasil dibuat`);
       }
@@ -188,7 +181,6 @@ export default function ManajemenView() {
   const currentMasalah = jenisMasalah.slice(startIndex, startIndex + itemsPerPage);
   const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  // ✅ totalPages dan totalItems dihitung berdasarkan tab yang aktif
   const totalItems =
     mainTab === "pengguna" ? filteredUsers.length :
       mainTab === "jenis" ? jenisMasalah.length :
@@ -199,7 +191,7 @@ export default function ManajemenView() {
   const goPrev = () => page > 1 && setPage(page - 1);
   const goNext = () => page < totalPages && setPage(page + 1);
 
-  const toggleStatus = (index: number) => { openToggleModal(currentUsers[index]); };
+  const toggleStatus = (index: number) => { openToggleModal(currentUsers[index - startIndex]); };
 
   return (
     <div className="space-y-6">
@@ -216,7 +208,15 @@ export default function ManajemenView() {
             </button>
           </div>
         )}
-        {mainTab === "pengguna" && <SubTabUser userTab={userTab} setUserTab={setUserTab} setPage={setPage} onTambah={openTambah} />}
+        {mainTab === "pengguna" && (
+          <SubTabUser
+            userTab={userTab}
+            setUserTab={setUserTab}
+            setPage={setPage}
+            onTambah={openTambah}
+            isSuperAdmin={isSuperAdmin}
+          />
+        )}
 
         <TableManajemen
           mainTab={mainTab} mode={mode} gedung={gedung}
