@@ -2,7 +2,7 @@ import React from "react";
 import logo from "@/assets/LandingPage/logosilfak.png";
 import profile from "@/assets/profile.png";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, FilePlus, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, FilePlus, UserCircle, LogOut, X } from "lucide-react";
 import type { ElementType } from "react";
 
 interface MenuItem {
@@ -14,9 +14,11 @@ interface MenuItem {
 
 interface SidebarOBProps {
   onLogoutClick: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function SidebarOB({ onLogoutClick }: SidebarOBProps) {
+export default function SidebarOB({ onLogoutClick, isOpen, onClose }: SidebarOBProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,12 +34,17 @@ export default function SidebarOB({ onLogoutClick }: SidebarOBProps) {
   };
 
   return (
-    <div className="w-64 bg-[#107C41] text-white flex flex-col justify-between p-6 h-screen">
+    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#107C41] text-white flex flex-col justify-between p-6 h-screen transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
       <div className="space-y-8">
-        {/* Logo SILFAK */}
-        <div className="flex items-center mb-4">
-          <img src={logo} className="h-17 max-w-full mt-1.5" />
-          <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
+        {/* Header Sidebar (Logo + Tombol Tutup) */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <img src={logo} className="h-17 max-w-full mt-1.5" />
+            <h1 className="text-3xl font-bold tracking-tighter">SILFAK</h1>
+          </div>
+          <button onClick={onClose} className="md:hidden text-white/80 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
         </div>
 
         {/* KARTU PROFIL */}
@@ -46,7 +53,7 @@ export default function SidebarOB({ onLogoutClick }: SidebarOBProps) {
             <img src={profile} alt="Profile" className="w-full h-full object-cover" />
           </div>
           <div className="overflow-hidden">
-            <h3 className="text-[#107C41] font-bold text-lg truncate">Rafi Fauzi</h3>
+            <h3 className="text-[#107C41] font-bold text-lg break-words whitespace-normal leading-tight">Rafi Fauzi</h3>
             <span className="inline-block bg-[#F3E8DD] text-[#7C4110] text-[10px] px-2 py-0.5 mt-2 rounded-md font-bold uppercase">
               OB
             </span>

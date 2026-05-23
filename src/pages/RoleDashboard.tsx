@@ -11,7 +11,7 @@ import MahasiswaDashboard from "@/pages/Dashboard";
 export default function RoleDashboard() {
   const { user } = useAuth();
 
-  if (user?.role === "admin") return <AdminDashboardPage />;
+  if (user?.role === "admin" || user?.role === "superadmin") return <AdminDashboardPage />;
   if (user?.role === "ob") return <DashboardOBPage />;
   return <MahasiswaDashboard />; // mahasiswa
 }

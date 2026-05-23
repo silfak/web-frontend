@@ -9,10 +9,12 @@
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,md}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md}\"",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "openapi-ts": "openapi-ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
+    "@hey-api/client-axios": "^0.9.1",
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@hey-api/openapi-ts": "^0.97.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

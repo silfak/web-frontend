@@ -6,7 +6,7 @@ import EmptyState from "@/components/DashboardAdmin/EmptyState";
 import { ClipboardList } from "lucide-react";
 import type { FiltersState, LaporanAdmin, LaporanAdminStatus } from "@/types";
 
-export default function LaporanView() {
+export default function LaporanView({ laporanData = [] }: { laporanData?: LaporanAdmin[] }) {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<FiltersState>({
     search: "",
@@ -18,36 +18,7 @@ export default function LaporanView() {
 
   const statuses: LaporanAdminStatus[] = ["reported", "inprogress", "resolved"];
 
-  const gedungList = [
-    { nama: "Gedung Dewi Sartika", ruang: ["FIK-101", "FIK-201", "FIK-301"] },
-    { nama: "Gedung Ki Hajar Dewantara", ruang: ["FKLAB-101", "FKLAB-203", "FKLAB-303"] },
-  ];
-
-  const jenisMasalah = ["Pemborosan Listrik", "AC Rusak", "Lampu Mati", "Kebocoran Air"];
-  const namaDepan = ["Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon", "Jhon"];
-  const namaBelakang = ["Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe", "Doe"];
-
-  const isEmpty = false;
-
-  const dummyData: LaporanAdmin[] = isEmpty
-    ? []
-    : Array.from({ length: 20 }, (_, i) => {
-        const gedungRandom = gedungList[Math.floor(Math.random() * gedungList.length)];
-        const ruangRandom = gedungRandom.ruang[Math.floor(Math.random() * gedungRandom.ruang.length)];
-        return {
-          id: `SFK-2026-00${i + 1}`,
-          nama: `${namaDepan[Math.floor(Math.random() * namaDepan.length)]} ${namaBelakang[Math.floor(Math.random() * namaBelakang.length)]}`,
-          gedung: gedungRandom.nama,
-          ruang: `Lantai ${Math.ceil(Math.random() * 3)}, Ruang ${ruangRandom}`,
-          jenis: jenisMasalah[Math.floor(Math.random() * jenisMasalah.length)],
-          tanggal: new Date(2026, 3, Math.floor(Math.random() * 28) + 1).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-          jam: `${14 + Math.floor(Math.random() * 5)}:${Math.floor(Math.random() * 60).toString().padStart(2, "0")}`,
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-          deskripsi: "AC diruangan menyala terus ketika sore hari dan tiap hari kamis.",
-        };
-      });
-
-  const filteredData = dummyData.filter((item) => {
+  const filteredData = laporanData.filter((item) => {
     return (
       item.nama.toLowerCase().includes(filters.search.toLowerCase()) &&
       (filters.status ? item.status === filters.status : true)

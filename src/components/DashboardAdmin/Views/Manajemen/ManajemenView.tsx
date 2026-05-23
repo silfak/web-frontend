@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Header from "./components/Header";
 import MainTab from "./components/MainTab";
@@ -13,13 +13,48 @@ import ToggleUserModal from "./components/modals/ToggleUserModal";
 import EditModal from "./components/modals/EditModal";
 import TambahModal from "./components/modals/TambahModal";
 import type { GedungItem, RuanganItem, JenisMasalahItem, UserItem, AnyItem } from "@/types";
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ManajemenView() {
   const { toasts, showToast, removeToast } = useToast();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "superadmin";
 
   const [mainTab, setMainTab] = useState("fasilitas");
   const [mode, setMode] = useState("gedung");
   const [userTab, setUserTab] = useState("mahasiswa");
+
+  const [gedung, setGedung] = useState<GedungItem[]>([]);
+  const [ruangan, setRuangan] = useState<RuanganItem[]>([]);
+  const [jenisMasalah, setJenisMasalah] = useState<JenisMasalahItem[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [admins, setAdmins] = useState<UserItem[]>([]);
+
+  const fetchData = async () => {
+    try {
+      const [bRes, rRes, cRes, uRes] = await Promise.all([
+        api.get("/api/buildings").catch(() => ({ data: { data: [] } })),
+        api.get("/api/rooms").catch(() => ({ data: { data: [] } })),
+        api.get("/api/categories").catch(() => ({ data: { data: [] } })),
+        api.get("/api/users").catch(() => ({ data: { data: [] } }))
+      ]);
+
+      setGedung((bRes.data?.data || []).map((b: any) => ({ id: b.id, nama: b.name, ruang: b.roomsCount ?? b.rooms?.length ?? 0 })));
+      setRuangan((rRes.data?.data || []).map((r: any) => ({ id: r.id, nama: r.name, gedung: r.building?.name || "", buildingId: r.building?.id || r.buildingId })));
+      setJenisMasalah((cRes.data?.data || []).map((c: any) => ({ id: c.id, nama: c.name })));
+
+      const allUsers = (uRes.data?.data || []).map((u: any) => ({
+        id: u.id, nama: u.name, email: u.email, nim: u.nim, role: u.role?.name || u.role || "", status: u.isActive ?? u.status === "ACTIVE"
+      }));
+      setUsers(allUsers.filter((u: any) => u.role !== "ADMIN" && u.role !== "SUPERADMIN"));
+      setAdmins(allUsers.filter((u: any) => u.role === "ADMIN"));
+    } catch (error) {
+      console.error("Gagal menarik data manajemen:", error);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   // MODAL TAMBAH
   const [showTambahModal, setShowTambahModal] = useState(false);
@@ -27,27 +62,61 @@ export default function ManajemenView() {
 
   const openTambah = (type: string) => { setTambahType(type); setShowTambahModal(true); };
   const closeTambah = () => { setShowTambahModal(false); setTambahType(""); };
-  const confirmTambah = (data: any) => {
-    if (tambahType === "gedung") showToast("Gedung berhasil ditambahkan");
-    else if (tambahType === "ruangan") showToast("Ruangan berhasil ditambahkan");
-    else if (tambahType === "jenis") showToast("Jenis masalah berhasil ditambahkan");
-    else if (tambahType === "ob") showToast("Akun OB berhasil dibuat");
-    else if (tambahType === "admin") showToast("Akun Admin berhasil dibuat");
-    closeTambah();
+  const confirmTambah = async (data: any) => {
+    try {
+      if (tambahType === "gedung") {
+        await api.post("/api/buildings", { name: data.nama });
+        showToast("Gedung berhasil ditambahkan");
+      } else if (tambahType === "ruangan") {
+        await api.post("/api/rooms", { name: data.nama, buildingId: data.buildingId || data.gedung, floor: Number(data.floor || 1) });
+        showToast("Ruangan berhasil ditambahkan");
+      } else if (tambahType === "jenis") {
+        await api.post("/api/categories", { name: data.nama });
+        showToast("Jenis masalah berhasil ditambahkan");
+      } else if (tambahType === "ob" || tambahType === "admin") {
+        if (tambahType === "ob") {
+          await api.post("/api/users/OB", { email: data.email, password: data.password, name: data.nama });
+        } else {
+          await api.post("/api/users/ADMIN", {
+            name: data.nama,
+            email: data.email,
+            password: data.password,
+          });
+        }
+        showToast(`Akun ${tambahType.toUpperCase()} berhasil dibuat`);
+      }
+      closeTambah();
+      fetchData();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || "Gagal menambahkan data");
+    }
   };
 
   // MODAL DELETE
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteItem, setDeleteItem] = useState<{ nama: string } | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{ nama: string, id?: string } | null>(null);
   const [deleteType, setDeleteType] = useState("");
 
-  const openDelete = (item: { nama: string }, type: string) => { setDeleteItem(item); setDeleteType(type); setShowDeleteModal(true); };
+  const openDelete = (item: { nama: string, id?: string }, type: string) => { setDeleteItem(item); setDeleteType(type); setShowDeleteModal(true); };
   const closeDelete = () => { setShowDeleteModal(false); setDeleteItem(null); setDeleteType(""); };
-  const confirmDelete = () => {
-    if (deleteType === "gedung") showToast("Gedung berhasil dihapus");
-    else if (deleteType === "ruangan") showToast("Ruangan berhasil dihapus");
-    else if (deleteType === "jenis") showToast("Jenis masalah berhasil dihapus");
-    closeDelete();
+  const confirmDelete = async () => {
+    try {
+      if (!deleteItem?.id) throw new Error("ID tidak ditemukan");
+      if (deleteType === "gedung") {
+        await api.delete(`/api/buildings/${deleteItem.id}`);
+        showToast("Gedung berhasil dihapus");
+      } else if (deleteType === "ruangan") {
+        await api.delete(`/api/rooms/${deleteItem.id}`);
+        showToast("Ruangan berhasil dihapus");
+      } else if (deleteType === "jenis") {
+        await api.delete(`/api/categories/${deleteItem.id}`);
+        showToast("Jenis masalah berhasil dihapus");
+      }
+      closeDelete();
+      fetchData();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || "Gagal menghapus data");
+    }
   };
 
   // MODAL TOGGLE USER
@@ -56,18 +125,16 @@ export default function ManajemenView() {
 
   const openToggleModal = (user: UserItem) => { setSelectedUser(user); setShowToggleModal(true); };
   const closeToggleModal = () => { setShowToggleModal(false); setSelectedUser(null); };
-  const confirmToggle = () => {
-    const allUsers = [...users];
-    const realIndex = allUsers.findIndex((u) => u.nim === selectedUser?.nim || u.email === selectedUser?.email);
-    if (realIndex !== -1) {
-      const wasActive = allUsers[realIndex].status;
-      allUsers[realIndex].status = !wasActive;
-      setUsers(allUsers);
-      const role = allUsers[realIndex].role;
-      const roleLabel = role === "ob" ? "OB" : role === "admin" ? "Admin" : "Mahasiswa";
-      showToast(wasActive ? `Akun ${roleLabel} berhasil dinonaktifkan` : `Akun ${roleLabel} berhasil diaktifkan`);
+  const confirmToggle = async () => {
+    if (!selectedUser?.id) return;
+    try {
+      await api.patch(`/api/users/${selectedUser.id}/status`);
+      showToast(`Status akun berhasil diubah`);
+      closeToggleModal();
+      fetchData();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || "Gagal mengubah status pengguna");
     }
-    closeToggleModal();
   };
 
   // MODAL EDIT
@@ -78,66 +145,53 @@ export default function ManajemenView() {
   const openEdit = (item: any, type: string) => { setEditItem(item); setEditType(type); setShowEditModal(true); };
   const closeEdit = () => { setShowEditModal(false); setEditItem(null); setEditType(""); };
   const handleEditChange = (field: string, value: any) => { setEditItem((prev: any) => ({ ...prev, [field]: value })); };
-  const confirmEdit = () => {
-    if (editType === "gedung") showToast("Gedung berhasil diperbarui");
-    else if (editType === "ruangan") showToast("Ruangan berhasil diperbarui");
-    else if (editType === "jenis") showToast("Jenis masalah berhasil diperbarui");
-    else if (editType === "user") {
-      const role = editItem?.role;
-      if (role === "ob") showToast("Akun OB berhasil diperbarui");
-      else if (role === "admin") showToast("Akun Admin berhasil diperbarui");
-      else showToast("Data pengguna berhasil diperbarui");
-    } else if (editType === "admin") showToast("Akun Admin berhasil diperbarui");
-    closeEdit();
+  const confirmEdit = async () => {
+    try {
+      if (!editItem?.id) throw new Error("ID tidak ditemukan");
+      if (editType === "gedung") {
+        await api.put(`/api/buildings/${editItem.id}`, { name: editItem.nama });
+        showToast("Gedung berhasil diperbarui");
+      } else if (editType === "ruangan") {
+        await api.put(`/api/rooms/${editItem.id}`, { name: editItem.nama, buildingId: editItem.buildingId || editItem.gedung, floor: editItem.floor || 1 });
+        showToast("Ruangan berhasil diperbarui");
+      } else if (editType === "jenis") {
+        await api.put(`/api/categories/${editItem.id}`, { name: editItem.nama });
+        showToast("Jenis masalah berhasil diperbarui");
+      } else if (editType === "user" || editType === "admin") {
+        await api.put(`/api/users/${editItem.id}`, { name: editItem.nama, email: editItem.email });
+        showToast("Data pengguna berhasil diperbarui");
+      }
+      closeEdit();
+      fetchData();
+    } catch (err: any) {
+      showToast(err.response?.data?.message || err.message || "Gagal memperbarui data");
+    }
   };
-
-  // DATA
-  const gedung: GedungItem[] = [
-    { nama: "Gedung Ki Hajar Dewantara", ruang: 18 },
-    { nama: "Gedung Dewi Sartika", ruang: 12 },
-  ];
-
-  const ruangan: RuanganItem[] = Array.from({ length: 20 }, (_, i) => ({
-    nama: `FIKLAB-${200 + i}`,
-    gedung: i % 2 === 0 ? "Gedung Ki Hajar Dewantara" : "Gedung Dewi Sartika",
-  }));
-
-  const jenisMasalah: JenisMasalahItem[] = Array.from({ length: 20 }, (_, i) => ({ nama: `Masalah ${i + 1}` }));
-
-  const [users, setUsers] = useState<UserItem[]>(
-    Array.from({ length: 20 }, (_, i) => ({
-      nama: "John Doe",
-      email: `24105120${i}@mahasiswa.upnvj.ac.id`,
-      nim: `24105120${i}`,
-      role: i % 2 === 0 ? "mahasiswa" : "ob",
-      status: i === 6 ? false : true,
-    }))
-  );
-
-  const [admins, setAdmins] = useState<UserItem[]>(
-    Array.from({ length: 8 }, (_, i) => ({
-      nama: "admin",
-      email: `admin@upnvj.ac.id`,
-      role: "admin",
-      status: i === 6 ? false : true,
-    }))
-  );
 
   // PAGINATION
   const itemsPerPage = 7;
   const [page, setPage] = useState(1);
   const startIndex = (page - 1) * itemsPerPage;
 
-  const filteredUsers = userTab === "admin" ? admins : users.filter((u) => u.role === userTab);
+  const filteredUsers = userTab === "admin"
+    ? admins
+    : users.filter((u) => String(u.role || "").toLowerCase() === String(userTab || "").toLowerCase());
+
   const currentRuangan = ruangan.slice(startIndex, startIndex + itemsPerPage);
   const currentMasalah = jenisMasalah.slice(startIndex, startIndex + itemsPerPage);
   const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-  const totalPages = 3;
+  const totalItems =
+    mainTab === "pengguna" ? filteredUsers.length :
+      mainTab === "jenis" ? jenisMasalah.length :
+        mode === "ruangan" ? ruangan.length : 0;
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
   const goPrev = () => page > 1 && setPage(page - 1);
   const goNext = () => page < totalPages && setPage(page + 1);
 
-  const toggleStatus = (index: number) => { openToggleModal(currentUsers[index]); };
+  const toggleStatus = (index: number) => { openToggleModal(currentUsers[index - startIndex]); };
 
   return (
     <div className="space-y-6">
@@ -154,7 +208,15 @@ export default function ManajemenView() {
             </button>
           </div>
         )}
-        {mainTab === "pengguna" && <SubTabUser userTab={userTab} setUserTab={setUserTab} setPage={setPage} onTambah={openTambah} />}
+        {mainTab === "pengguna" && (
+          <SubTabUser
+            userTab={userTab}
+            setUserTab={setUserTab}
+            setPage={setPage}
+            onTambah={openTambah}
+            isSuperAdmin={isSuperAdmin}
+          />
+        )}
 
         <TableManajemen
           mainTab={mainTab} mode={mode} gedung={gedung}
@@ -165,7 +227,18 @@ export default function ManajemenView() {
         />
 
         {(mainTab !== "fasilitas" || mode === "ruangan") && (
-          <PaginationManajemen mainTab={mainTab} mode={mode} startIndex={startIndex} itemsPerPage={itemsPerPage} page={page} setPage={setPage} goPrev={goPrev} goNext={goNext} />
+          <PaginationManajemen
+            mainTab={mainTab}
+            mode={mode}
+            startIndex={startIndex}
+            itemsPerPage={itemsPerPage}
+            page={page}
+            setPage={setPage}
+            goPrev={goPrev}
+            goNext={goNext}
+            totalPages={totalPages}
+            totalItems={totalItems}
+          />
         )}
       </div>
 

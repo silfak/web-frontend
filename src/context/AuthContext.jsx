@@ -26,6 +26,8 @@ export function AuthProvider({ children }) {
 
     const user = {
       id: payload.id,
+      name: payload.name,
+      email: payload.email,
       role: payload.role.name.toLowerCase(),
     };
 
