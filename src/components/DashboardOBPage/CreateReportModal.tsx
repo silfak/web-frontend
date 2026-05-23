@@ -1,78 +1,140 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Upload, Send, FileText } from "lucide-react";
-import type { Report } from "@/types";
 
-interface SelectedFile {
-  name: string;
-  size: string;
-  preview: string;
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
+
+// Extract lantai dari nama ruangan
+// "Ruang FIKLAB-201" → 2, "Toilet Lantai 3" → 3, fallback ke r.floor
+function extractFloor(roomName: string, fallback: number): number {
+  const codeMatch = roomName.match(/-(\d)(\d{2})$/);
+  if (codeMatch) return parseInt(codeMatch[1]);
+
+  const lantaiMatch = roomName.match(/lantai\s+(\d+)/i);
+  if (lantaiMatch) return parseInt(lantaiMatch[1]);
+
+  return fallback;
 }
 
-interface CreateReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirmClick: (data: Report) => void;
-}
+export default function CreateReportModal({ isOpen, onClose, onConfirmClick }) {
+  const { user } = useAuth();
 
-  export default function CreateReportModal({ isOpen, onClose, onConfirmClick }: CreateReportModalProps) {
-  // STATE MENAMPUNG FILE
-  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
-  const [gedung, setGedung] = useState("Gedung Dewi Sartika");
-  const [ruangan, setRuangan] = useState("Lantai 1");
-  const [jenisMasalah, setJenisMasalah] = useState("Pemborosan AC");
-  const [deskripsi, setDeskripsi] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null); 
+  const [buildings, setBuildings] = useState<any[]>([]);
+  const [allRooms, setAllRooms] = useState<any[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
-  // Fungsi membersihkan memori preview saat modal ditutup atau foto dihapus
-    useEffect(() => {
-      return () => {
-        if (selectedFile?.preview) {
-          URL.revokeObjectURL(selectedFile.preview);
-        }
-      };
-    }, [selectedFile]);
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("");
+  const [selectedRoom, setSelectedRoom] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [deskripsi, setDeskripsi] = useState<string>("");
 
-  if (!isOpen) return null; 
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // HANDLER PILIH FILE
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  useEffect(() => {
+    if (isOpen) {
+      api.get("/api/buildings")
+        .then(res => setBuildings(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data gedung:", err));
+
+      api.get("/api/rooms")
+        .then(res => setAllRooms(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data ruangan:", err));
+
+      api.get("/api/categories")
+        .then(res => setCategories(res.data.data || []))
+        .catch(err => console.error("Gagal mengambil data kategori:", err));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (selectedBuilding) {
+      const selectedBuildingStr = String(selectedBuilding);
+      const filtered = allRooms.filter(room => {
+        const bId1 = room.buildingId ? String(room.buildingId) : null;
+        const bId2 = room.building_id ? String(room.building_id) : null;
+        const bId3 = room.building?.id ? String(room.building?.id) : null;
+        const bName = room.building?.name ? String(room.building?.name) : null;
+        return bId1 === selectedBuildingStr || bId2 === selectedBuildingStr || bId3 === selectedBuildingStr || bName === selectedBuildingStr;
+      });
+      setFilteredRooms(filtered);
+    } else {
+      setFilteredRooms([]);
+    }
+    setSelectedRoom("");
+  }, [selectedBuilding, allRooms]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedFile?.preview) {
+        URL.revokeObjectURL(selectedFile.preview);
+      }
+    };
+  }, [selectedFile]);
+
+  if (!isOpen) return null;
+
+  const handleFileChange = (e: any) => {
+    const file = e.target.files[0];
     if (file) {
-      // Validasi ukuran (Max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("File terlalu besar! Maksimal 5MB.");
         return;
       }
-
-      const fileData: SelectedFile = {
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(1) + " MB", // Konversi ke MB
-        preview: URL.createObjectURL(file), // Buat URL sementara untuk preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedFile({
+          name: file.name,
+          size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+          preview: reader.result as string,
+        });
       };
-      setSelectedFile(fileData);
+      reader.readAsDataURL(file);
     }
   };
 
-  // FUNGSI MENGIRIM DATA KE DASHBOARD
   const handleKirimClick = () => {
-    const newReportData: Report = {
-      id: `SFK-2026-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      tgl: "2 Mei 2026",
-      lokasi: gedung,
-      ruang: ruangan,
-      masalah: jenisMasalah,
-      deskripsi: deskripsi,
-      status: "Reported",
+    if (!selectedBuilding) {
+      alert("Pilih gedung kampus terlebih dahulu.");
+      return;
+    }
+    if (!selectedRoom) {
+      alert("Pilih ruangan/lantai terlebih dahulu.");
+      return;
+    }
+    if (!selectedCategory) {
+      alert("Pilih jenis masalah terlebih dahulu.");
+      return;
+    }
+    if (!deskripsi.trim()) {
+      alert("Masukkan deskripsi masalah terlebih dahulu.");
+      return;
+    }
+
+    const buildingName = buildings.find(b => b.id === selectedBuilding)?.name || "Gedung Unknown";
+    const roomName = filteredRooms.find(r => r.id === selectedRoom)?.name || "Ruang Unknown";
+    const categoryName = categories.find(c => c.id === selectedCategory)?.name || "Kategori Unknown";
+
+    const originalLocationTag = `[Lokasi: ${buildingName} - ${roomName} | Masalah: ${categoryName}]`;
+
+    const newReportData = {
+      roomId: selectedRoom,
+      categoryId: selectedCategory,
+      description: `${deskripsi.trim()} ${originalLocationTag}`,
+      title: categoryName,
+      priority: "medium",
+
+      lokasiName: buildingName,
+      ruangName: roomName,
       foto: selectedFile ? selectedFile.preview : null
     };
-    
-    // Kirim objek data ini ke Dashboard
+
     onConfirmClick(newReportData);
   };
 
-
-  const handleRemoveFile = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation(); // Agar tidak memicu click pada div parent
+  const handleRemoveFile = (e) => {
+    e.stopPropagation();
     if (selectedFile?.preview) URL.revokeObjectURL(selectedFile.preview);
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -81,7 +143,7 @@ interface CreateReportModalProps {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-        
+
         {/* Header Modal */}
         <div className="bg-[#107C41] p-6 flex justify-between items-center text-white">
           <h3 className="text-xl font-bold">Buat Laporan Baru</h3>
@@ -92,32 +154,36 @@ interface CreateReportModalProps {
 
         {/* Form Content */}
         <div className="p-8 space-y-8 max-h-[80vh] overflow-y-auto text-sm">
-          
+
           {/* Section 1: Lokasi */}
           <div className="space-y-4">
             <h4 className="font-bold text-[#107C41] border-l-4 border-[#107C41] pl-3 uppercase tracking-widest text-xs">Lokasi</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-600 font-bold mb-2">Pilih Gedung</label>
-                <select 
-                value={gedung} 
-                onChange={(e) => setGedung(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none appearance-none bg-no-repeat bg-position-[right_1rem_center]">
-                  <option>Pilih Gedung Kampus</option>
-                  <option>Gedung Dewi Sartika</option>
-                  <option>Gedung Ki Hajar Dewantara</option>
+                <select
+                  value={selectedBuilding}
+                  onChange={(e) => setSelectedBuilding(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
+                  <option value="">Pilih Gedung Kampus</option>
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-gray-600 font-bold mb-2">Pilih Ruangan/Lantai</label>
                 <select
-                value={ruangan} 
-                onChange={(e) => setRuangan(e.target.value)} 
-                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
-                  <option>Pilih Ruangan/Lantai</option>
-                  <option>Lantai 1</option>
-                  <option>Lantai 2</option>
-                  <option>Lantai 3</option>
+                  value={selectedRoom}
+                  onChange={(e) => setSelectedRoom(e.target.value)}
+                  disabled={!selectedBuilding}
+                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                  <option value="">Pilih Ruangan/Lantai</option>
+                  {filteredRooms.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} (Lantai {extractFloor(r.name, r.floor)})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -129,19 +195,19 @@ interface CreateReportModalProps {
             <div>
               <label className="block text-gray-600 font-bold mb-2">Jenis Masalah</label>
               <select
-              value={jenisMasalah} 
-              onChange={(e) => setJenisMasalah(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
-                <option>Tentukan Jenis Masalah</option>
-                <option>Pemborosan AC</option>
-                <option>Toilet Rusak</option>
-                <option>Lampu Padam</option>
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-[#107C41]/20 outline-none">
+                <option value="">Tentukan Jenis Masalah</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-gray-600 font-bold mb-2">Deskripsi Masalah</label>
-              <textarea 
-                rows={4} 
+              <textarea
+                rows={4}
                 placeholder="Jelaskan Masalah yang ditemukan"
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
@@ -153,20 +219,16 @@ interface CreateReportModalProps {
           {/* Section 3: Upload Foto */}
           <div className="space-y-4">
             <h4 className="font-bold text-[#107C41] border-l-4 border-[#107C41] pl-3 uppercase tracking-widest text-xs">Foto Bukti (Opsional)</h4>
-            
-            {/* Input File Tersembunyi */}
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
               accept="image/*"
               className="hidden"
             />
-
             {!selectedFile ? (
-              // Tampilan Awal: Kotak Dash (Click to Upload)
-              <div 
-                onClick={() => fileInputRef.current?.click()}
+              <div
+                onClick={() => fileInputRef.current.click()}
                 className="border-2 border-dashed border-gray-200 rounded-3xl p-10 flex flex-col items-center justify-center text-center hover:border-[#107C41]/40 hover:bg-green-50/30 transition-all cursor-pointer group"
               >
                 <div className="w-12 h-12 bg-green-50 text-[#107C41] rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -176,18 +238,15 @@ interface CreateReportModalProps {
                 <p className="text-[10px] text-gray-400 mt-1">Klik untuk memilih file gambar (Max 5MB)</p>
               </div>
             ) : (
-              // Tampilan SETELAH UPLOAD
               <div className="bg-[#E8F5EE] border border-green-100 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top-2 duration-300 relative group">
                 <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-white shrink-0">
                   <img src={selectedFile.preview} alt="Preview" className="w-full h-full object-cover" />
                 </div>
-                
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 text-sm truncate">{selectedFile.name}</p>
                   <p className="text-xs text-gray-500 font-medium">{selectedFile.size}</p>
                 </div>
-
-                <button 
+                <button
                   onClick={handleRemoveFile}
                   className="p-2 hover:bg-white/50 rounded-full text-gray-400 hover:text-red-500 transition-all"
                 >

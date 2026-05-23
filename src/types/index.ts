@@ -7,6 +7,7 @@ import type { ElementType } from "react";
 // ----- REPORT (OB) -----
 export interface Report {
   id?: string;
+  friendlyId?: string;
   tgl?: string;
   lokasi?: string;
   ruang?: string;
@@ -15,6 +16,8 @@ export interface Report {
   status: ReportStatus;
   foto?: string | null;
   catatan?: string;
+  rawDate?: Date;
+  rawDescription?: string;
 }
 
 export type ReportStatus = "Reported" | "Inprogress" | "Resolved";
@@ -22,6 +25,8 @@ export type ReportStatus = "Reported" | "Inprogress" | "Resolved";
 // ----- LAPORAN (ADMIN) -----
 export interface LaporanAdmin {
   id: string;
+  originalId?: string;
+  rawDate?: Date;
   nama: string;
   gedung: string;
   ruang: string;
@@ -31,6 +36,8 @@ export interface LaporanAdmin {
   status: LaporanAdminStatus;
   deskripsi?: string;
   foto?: string | null;
+  catatan?: string;
+  rawDescription?: string;
 }
 
 export type LaporanAdminStatus = "reported" | "inprogress" | "resolved";
@@ -46,23 +53,28 @@ export interface FiltersState {
 
 // ----- MANAJEMEN -----
 export interface GedungItem {
+  id?: string;
   nama: string;
   ruang: number | string;
   gedung?: string;
 }
 
 export interface RuanganItem {
+  id?: string;
   nama: string;
   gedung: string;
+  buildingId?: string;
 }
 
 export interface JenisMasalahItem {
+  id?: string;
   nama: string;
 }
 
-export type UserRole = "mahasiswa" | "ob" | "admin";
+export type UserRole = "mahasiswa" | "ob" | "admin" | "MAHASISWA" | "OB" | "ADMIN";
 
 export interface UserItem {
+  id?: string;
   nama: string;
   email: string;
   nim?: string;

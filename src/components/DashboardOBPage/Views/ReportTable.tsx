@@ -14,6 +14,11 @@ export default function ReportTable({ reports, onViewDetail }: ReportTableProps)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
+  const uniqueBuildings = useMemo(() => {
+    const b = new Set(reports.map(r => r.lokasi).filter(Boolean));
+    return Array.from(b);
+  }, [reports]);
+
   const filteredReports = useMemo(() => {
     return reports.filter((r) => {
       const matchGedung = filterGedung === "Semua" || r.lokasi === filterGedung;
@@ -43,8 +48,9 @@ export default function ReportTable({ reports, onViewDetail }: ReportTableProps)
           <label className="text-xs font-bold text-gray-600">Pilih Gedung</label>
           <select value={filterGedung} onChange={(e) => handleFilterChange("gedung", e.target.value)} className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#107C41]/10 cursor-pointer">
             <option value="Semua">Semua Gedung</option>
-            <option value="Gedung Dewi Sartika">Gedung Dewi Sartika</option>
-            <option value="Gedung Ki Hajar Dewantara">Gedung Ki Hajar Dewantara</option>
+            {uniqueBuildings.map(b => (
+              <option key={b} value={b}>{b}</option>
+            ))}
           </select>
         </div>
         <div className="space-y-2">

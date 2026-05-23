@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
 import AdminSidebar from "@/components/DashboardAdmin/AdminSidebar";
 import AdminHeader from "@/components/DashboardAdmin/AdminHeader";
@@ -8,44 +9,117 @@ import DetailLaporan from "@/components/DashboardAdmin/Views/DetailLaporan";
 import ManajemenView from "@/components/DashboardAdmin/Views/Manajemen/ManajemenView";
 import ProfileAdminView from "@/components/DashboardAdmin/Views/ProfileAdminView";
 import type { LaporanAdmin, LaporanAdminStatus } from "@/types";
+import api from "@/lib/axios";
 
-const statuses: LaporanAdminStatus[] = ["reported", "inprogress", "resolved"];
-const gedungList = [
-  { nama: "Gedung Dewi Sartika", ruang: ["FIK-101", "FIK-201", "FIK-301"] },
-  { nama: "Gedung Ki Hajar Dewantara", ruang: ["FKLAB-101", "FKLAB-203", "FKLAB-303"] },
-];
-const jenisMasalah = ["Pemborosan Listrik", "AC Rusak", "Lampu Mati", "Kebocoran Air"];
-const dummyData: LaporanAdmin[] = Array.from({ length: 20 }, (_, i) => {
-  const gedung = gedungList[i % 2];
-  const ruang = gedung.ruang[i % gedung.ruang.length];
-  return {
-    id: `SFK-2026-${String(i + 1).padStart(3, "0")}`,
-    nama: `Jhon Doe`,
-    gedung: gedung.nama,
-    ruang: `Lantai ${(i % 3) + 1}, Ruang ${ruang}`,
-    jenis: jenisMasalah[i % jenisMasalah.length],
-    tanggal: new Date(2026, 3, (i % 28) + 1).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-    jam: `${14 + (i % 5)}:${String(i * 3 % 60).padStart(2, "0")}`,
-    status: statuses[i % statuses.length],
-    deskripsi: "AC diruangan menyala terus ketika sore hari dan tiap hari kamis.",
-  };
-});
-
-function DetailLaporanWrapper() {
+function DetailLaporanWrapper({ laporanData, onUpdate }: { laporanData: LaporanAdmin[], onUpdate: () => void }) {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const laporan: LaporanAdmin | undefined =
-    (location.state as any)?.laporan ?? dummyData.find((l) => l.id === id);
+    (location.state as any)?.laporan ?? laporanData.find((l) => l.id === id);
   
   if (!laporan) return <Navigate to="/laporan" replace />;
   
-  return <DetailLaporan laporan={laporan} onKembali={() => navigate("/laporan")} />;
+  return <DetailLaporan laporan={laporan} onKembali={() => navigate("/laporan")} onUpdate={onUpdate} />;
 }
 
 export default function AdminDashboard() {
   const location = useLocation();
   const path = location.pathname;
+
+  const [reports, setReports] = useState<LaporanAdmin[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const mapBackendStatus = (status: string): LaporanAdminStatus => {
+    if (status === "IN_PROGRESS") return "inprogress";
+    if (status === "RESOLVED") return "resolved";
+    return "reported";
+  };
+
+  const mapBackendReports = (backendData: any[], roomsList: any[], categoriesList: any[], usersList: any[]): LaporanAdmin[] => {
+    return backendData.map((item) => {
+      let gedungName = "Gedung Dewi Sartika";
+      let ruangName = "Lantai 1";
+      let masalahName = "Masalah Fasilitas";
+      
+      const locAndProblemMatch = item.description?.match(/\[Lokasi:\s*(.*?)\s*-\s*(.*?)\s*\|\s*Masalah:\s*(.*?)\]/);
+      if (locAndProblemMatch) {
+        gedungName = locAndProblemMatch[1];
+        ruangName = locAndProblemMatch[2];
+        masalahName = locAndProblemMatch[3];
+      } else {
+        const rId = item.roomId || item.room_id;
+        const room = roomsList.find((r: any) => r.id === rId);
+        if (room?.building?.name) {
+          gedungName = room.building.name;
+        }
+        if (room) {
+          ruangName = room.name || `Lantai ${room.floor}`;
+        }
+        const cId = item.categoryId || item.category_id;
+        const category = categoriesList.find((c: any) => c.id === cId);
+        masalahName = category?.name || item.title || "Masalah Fasilitas";
+      }
+
+      let cleanDescription = item.description || "";
+      let extractedCatatan = "";
+      
+      const catatanMatch = cleanDescription.match(/\[Catatan OB:\s*(.*?)\]/);
+      if (catatanMatch) {
+          extractedCatatan = catatanMatch[1];
+          cleanDescription = cleanDescription.replace(/\[Catatan OB:\s*.*?\]/g, "");
+      }
+      
+      cleanDescription = cleanDescription.replace(/\[Lokasi:\s*.*?\]/, "").trim();
+      const repId = item.reporterId || item.reporter_id;
+      const reporter = usersList.find((u: any) => u.id === repId);
+
+      const createdTime = item.createdAt || item.created_at;
+      const d = createdTime ? new Date(createdTime) : new Date();
+
+      return {
+        id: `SFK-${item.id?.substring(0, 6).toUpperCase()}`,
+        originalId: item.id,
+        rawDate: d,
+        nama: reporter?.name || item.reporter?.name || "Anonim",
+        gedung: gedungName,
+        ruang: ruangName,
+        jenis: masalahName,
+        tanggal: d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+        jam: d.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }),
+        status: mapBackendStatus(item.status),
+        deskripsi: cleanDescription,
+        foto: item.imageUrl || item.image_url || null,
+        catatan: extractedCatatan || item.note || "",
+        rawDescription: item.description || "",
+      };
+    });
+  };
+
+  const fetchReportsData = async () => {
+    try {
+      const [reportsRes, roomsRes, categoriesRes, usersRes] = await Promise.all([
+        api.get("/api/reports"),
+        api.get("/api/rooms"),
+        api.get("/api/categories"),
+        api.get("/api/users").catch(() => ({ data: { data: [] } }))
+      ]);
+      const mappedData = mapBackendReports(
+        reportsRes.data.data || [],
+        roomsRes.data.data || [],
+        categoriesRes.data.data || [],
+        usersRes.data.data || []
+      ).sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+      
+      setReports(mappedData);
+    } catch (err) {
+      console.error("Gagal menarik data laporan admin:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportsData();
+  }, []);
 
   const getTitle = (): string => {
     if (path === "/laporan" || path.startsWith("/laporan/")) return "Laporan";
@@ -55,19 +129,28 @@ export default function AdminDashboard() {
   };
 
   const renderContent = () => {
-    if (path.startsWith("/laporan/")) return <DetailLaporanWrapper />;
-    if (path === "/laporan") return <LaporanView />;
+    if (path.startsWith("/laporan/")) return <DetailLaporanWrapper laporanData={reports} onUpdate={fetchReportsData} />;
+    if (path === "/laporan") return <LaporanView laporanData={reports} />;
     if (path === "/manajemen") return <ManajemenView />;
     if (path === "/profile") return <ProfileAdminView />;
-    return <DashboardView laporanData={dummyData} />;
+    return <DashboardView laporanData={reports} />;
   };
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col md:ml-64">
-        <div className="p-4 flex-1">
-          <AdminHeader title={getTitle()} />
+    <div className="flex h-screen bg-[#F9FBF9] overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 flex flex-col overflow-y-auto w-full">
+        <div className="p-4 md:p-10 flex-1">
+          <AdminHeader title={getTitle()} onOpenSidebar={() => setIsSidebarOpen(true)} />
           {renderContent()}
         </div>
         <Footer />
