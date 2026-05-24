@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import Toast from "@/components/Toast";
+import { register as registerService } from "@/services/authService";
 
 import UPNVJ from "@/assets/LandingPage/landingpage.png";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import { Eye, EyeOff, Mail, Lock, User, Hash } from "lucide-react";
 
 const Hero = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
   const { toasts, showToast, removeToast } = useToast();
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
@@ -63,7 +63,7 @@ const Hero = () => {
     setApiError("");
 
     try {
-      await register(formData);
+      await registerService(formData);
       showToast("Registrasi berhasil! Silakan login.", "success");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err: any) {
