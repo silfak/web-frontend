@@ -4,6 +4,7 @@ import profile from "@/assets/profile.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, FilePlus, UserCircle, LogOut, X } from "lucide-react";
 import type { ElementType } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface MenuItem {
   name: string;
@@ -21,6 +22,8 @@ interface SidebarOBProps {
 export default function SidebarOB({ onLogoutClick, isOpen, onClose }: SidebarOBProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const userName = user?.name || user?.nama || "Pengguna";
 
   const menuItems: MenuItem[] = [
     { name: "Beranda", path: "/dashboard", icon: LayoutDashboard, exact: true },
@@ -53,7 +56,7 @@ export default function SidebarOB({ onLogoutClick, isOpen, onClose }: SidebarOBP
             <img src={profile} alt="Profile" className="w-full h-full object-cover" />
           </div>
           <div className="overflow-hidden">
-            <h3 className="text-[#107C41] font-bold text-lg break-words whitespace-normal leading-tight">Rafi Fauzi</h3>
+            <h3 className="text-[#107C41] font-bold text-lg break-words whitespace-normal leading-tight">{userName}</h3>
             <span className="inline-block bg-[#F3E8DD] text-[#7C4110] text-[10px] px-2 py-0.5 mt-2 rounded-md font-bold uppercase">
               OB
             </span>
